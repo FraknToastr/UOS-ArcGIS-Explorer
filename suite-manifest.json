@@ -1,9 +1,9 @@
 {
   "version": "2.1",
   "sha256": {
-    "index.html": "69264b29e37a031497ae7c0085c87a2d7b6443b71fd4d01b1f6781e565bad41d",
+    "index.html": "654a9b8f4c84bf7923e3b85e3bfc5b3bf0b3a47e344877d29a24831f866c3d20",
     "toolbox/engine/gdb_exporter.py": "d948dc3e249b6eafd8a8301083b4ddcccaa7b24b070f57dad8725e326cd92e7d",
-    "launcher/app.js": "76ecc121b92b0978909ef1c5607e1618bd3e3032bfcbc82df5a86092cd48114c",
+    "launcher/app.js": "df4dcd18aee88c94e9c835932bbfd3b774a5df1b61bafca9221cc5f814907948",
     "launcher/audio.js": "7054448bb0fe7e74acb3fa695664ac80c123ed4b0917ea3576c0a8338fb8432e",
     "launcher/background.js": "1b54c106fd696430a9b68a60ab2760eadf26a417eb96b80dcc83f72f5919d93c",
     "launcher/satellites.js": "75609657d1d3d93c2dfd960967c36c79e6eb467252899050030fc28687b8252c",
