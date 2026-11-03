@@ -1,0 +1,34 @@
+{
+  "result": "PASS",
+  "sampleRate": 48000,
+  "framesPerTrack": 48000,
+  "records": [
+    {
+      "title": "Cybernoid II",
+      "composer": "Jeroen Tel",
+      "subtune": 1,
+      "sourceSHA256": "41f338f44b4f54e351e672156ee0e2a60c8437eb24645db3f9d4abfbb0cff192",
+      "firstSecondPCM_SHA256": "363689f3ccb8c7b9bfb25e63d05448e8ee7f20d395b152b8b8f84097430e7d5a",
+      "rms": 0.11488978857740122,
+      "peak": 0.4196982979774475
+    },
+    {
+      "title": "ACE II",
+      "composer": "Rob Hubbard",
+      "subtune": 1,
+      "sourceSHA256": "7d975ebb28c86fc01823e44953344d55f10bfdcf2943533344d8f4d717b2c88c",
+      "firstSecondPCM_SHA256": "898199cf7efb3114391ec64211d0f4f010f46f0526dc54f53843d7b21fab8e79",
+      "rms": 0.12686040958934558,
+      "peak": 0.43492886424064636
+    },
+    {
+      "title": "Last Ninja 2 · Central Park",
+      "composer": "Matt Gray",
+      "subtune": 2,
+      "sourceSHA256": "7686b46aada0a107dd9717b47e76209acca9e47b92a6ea10657fcbd63f24588a",
+      "firstSecondPCM_SHA256": "5b6a8ed949379e1e6d88528179bfecfa5eea3205ce9e8185004e502e8f6add3e",
+      "rms": 0.03842771030627107,
+      "peak": 0.1541387289762497
+    }
+  ]
+}

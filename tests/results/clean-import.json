@@ -1,0 +1,50 @@
+{
+  "result": "PASS",
+  "results": [
+    {
+      "mode": "file-workers",
+      "result": "PASS",
+      "largePageWallMs": 181.60000000009313,
+      "heartbeatP95": 85.29999999981374,
+      "heartbeatMax": 85.29999999981374,
+      "workersCreated": 2,
+      "cache": {
+        "entries": 1,
+        "fileBytes": 5668,
+        "maxEntries": 4,
+        "maxFileBytes": 8388608
+      },
+      "readBytes": 9873935
+    },
+    {
+      "mode": "http-workers",
+      "result": "PASS",
+      "largePageWallMs": 177.5,
+      "heartbeatP95": 58.5,
+      "heartbeatMax": 58.5,
+      "workersCreated": 1,
+      "cache": {
+        "entries": 1,
+        "fileBytes": 5668,
+        "maxEntries": 4,
+        "maxFileBytes": 8388608
+      },
+      "readBytes": 9873935
+    },
+    {
+      "mode": "file-inline-inflater",
+      "result": "PASS",
+      "largePageWallMs": 135.5,
+      "heartbeatP95": 51.89999999990687,
+      "heartbeatMax": 51.89999999990687,
+      "workersCreated": 0,
+      "cache": {
+        "entries": 1,
+        "fileBytes": 5668,
+        "maxEntries": 4,
+        "maxFileBytes": 8388608
+      },
+      "readBytes": 9873935
+    }
+  ]
+}

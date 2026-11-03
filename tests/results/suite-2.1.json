@@ -1,0 +1,43 @@
+{
+  "suiteVersion": "2.1",
+  "onlineVersion": "2.5",
+  "gdbVersion": "22.7",
+  "result": "PASS",
+  "checks": {
+    "onlineLogic": 50,
+    "toolboxSimulation": 19,
+    "launcherBrowser": 9,
+    "craftModesBrowser": 5,
+    "graphBrowser": {
+      "mixedNodes": 31,
+      "viewportWidths": [
+        1920,
+        1366,
+        900,
+        390
+      ],
+      "layouts": [
+        "balanced",
+        "radial",
+        "dependency"
+      ],
+      "largeOverviewNodes": 1200,
+      "desktopDefaultLabelPixelsAt1366": 13.57
+    },
+    "connectBrowser": "scopes/types/pagination/load/rollback/scrolling",
+    "accessibleTips": "launcher/online/gdb; dynamic titles; viewport; keyboard; Escape; hover exit",
+    "audioReturn": "file-history ScriptProcessor and HTTP return-link AudioWorklet; saved position; icon restart",
+    "audioExisting": "three actual SID tunes in three playback modes",
+    "routes": "file and HTTP subdirectory",
+    "protectedOriginalFiles": 217,
+    "cleanExtraction": "Initial 2.1: audio return, accessible tips and 19 toolbox simulations; follow-up ZIP/source hashes verified",
+    "graphAppearanceBrowser": "default cards off; default click-only highlighting on; transparent hit areas; hover/click/keyboard/background reset; mobile access; stable data and geometry",
+    "ufoOrientation": "actual mesh underside inward and dome outward; all 12 orbit slots, 361 sampled phases each"
+  },
+  "limitations": [
+    "Private live ArcGIS authentication not exercised",
+    "ArcPy tested with supplied simulation; real ArcGIS Pro runtime launch blocked by WSL interop",
+    "Physical GPU/mobile hardware and subjective audio quality not measured",
+    "Graph screenshot not supplied; described mixed-type scenario reproduced with synthetic fixture"
+  ]
+}

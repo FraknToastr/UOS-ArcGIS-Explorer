@@ -1,0 +1,623 @@
+[
+  {
+    "name": "real-globe-defaults-and-offline",
+    "passed": true,
+    "frames": 1,
+    "globeFrames": 1,
+    "backgroundFrames": 1,
+    "contexts": 1,
+    "lost": 0,
+    "raf": [],
+    "cost": [
+      15.599999997764826
+    ],
+    "resolution": [
+      1152,
+      1152
+    ],
+    "state": "ready",
+    "phi": 0.35,
+    "cameraPhi": 0.35,
+    "spinAngle": 0,
+    "theta": 0.18,
+    "viewportFactor": 1.6,
+    "effectiveScale": 0.625,
+    "pending": true,
+    "settings": {
+      "autoRotate": false,
+      "speed": 0.5,
+      "theta": 0.18,
+      "scale": 1,
+      "mapSamples": 32000,
+      "mapBrightness": 6,
+      "diffuse": 1.2,
+      "glow": 1,
+      "satellites": true
+    },
+    "satellites": {
+      "frames": 1,
+      "vertices": 96,
+      "bufferBytes": 2304,
+      "orbits": 12,
+      "synchronization": "common Earth-spin period",
+      "constellation": "Walker Delta 12/3/2, 60 degrees",
+      "active": true
+    },
+    "hasGdb": false
+  },
+  {
+    "name": "alpha-logo-geometry-no-overlap-and-holes",
+    "passed": true,
+    "overlap": 0,
+    "totalA": 110472,
+    "totalB": 72999,
+    "emptyA": 1959,
+    "emptyB": 1567,
+    "samples": [
+      {
+        "x": 1559,
+        "y": 77,
+        "id": "open-gdb-explorer"
+      },
+      {
+        "x": 1564,
+        "y": 80,
+        "id": "open-gdb-explorer"
+      },
+      {
+        "x": 1756,
+        "y": 344,
+        "id": "open-arcgis-online-explorer"
+      }
+    ],
+    "viewBox": "0 0 2170 725"
+  },
+  {
+    "name": "responsive-logo-hit-testing-dpr-zoom",
+    "passed": true,
+    "checked": [
+      {
+        "size": {
+          "width": 390,
+          "height": 844
+        },
+        "zoom": 1,
+        "result": [
+          {
+            "id": "open-gdb-explorer",
+            "x": 217.43090517241376,
+            "y": 24.820689655172412
+          },
+          {
+            "id": "open-arcgis-online-explorer",
+            "x": 320.5978017241379,
+            "y": 56.21931034482758
+          }
+        ]
+      },
+      {
+        "size": {
+          "width": 390,
+          "height": 844
+        },
+        "zoom": 1.5,
+        "result": [
+          {
+            "id": "open-gdb-explorer",
+            "x": 131.13853762922616,
+            "y": 37.231034482758616
+          },
+          {
+            "id": "open-arcgis-online-explorer",
+            "x": 285.8888824568124,
+            "y": 84.32896551724139
+          }
+        ]
+      },
+      {
+        "size": {
+          "width": 768,
+          "height": 1024
+        },
+        "zoom": 1,
+        "result": [
+          {
+            "id": "open-gdb-explorer",
+            "x": 594.4430280172413,
+            "y": 28.07769396551724
+          },
+          {
+            "id": "open-arcgis-online-explorer",
+            "x": 696.0237176724138,
+            "y": 58.99355603448276
+          }
+        ]
+      },
+      {
+        "size": {
+          "width": 768,
+          "height": 1024
+        },
+        "zoom": 1.5,
+        "result": [
+          {
+            "id": "open-gdb-explorer",
+            "x": 507.6762531464675,
+            "y": 42.10872844827586
+          },
+          {
+            "id": "open-arcgis-online-explorer",
+            "x": 660.047287629226,
+            "y": 88.48252155172413
+          }
+        ]
+      },
+      {
+        "size": {
+          "width": 1440,
+          "height": 960
+        },
+        "zoom": 1,
+        "result": [
+          {
+            "id": "open-gdb-explorer",
+            "x": 1114.5767887931033,
+            "y": 52.6489224137931
+          },
+          {
+            "id": "open-arcgis-online-explorer",
+            "x": 1305.0485129310346,
+            "y": 110.61857758620691
+          }
+        ]
+      },
+      {
+        "size": {
+          "width": 1440,
+          "height": 960
+        },
+        "zoom": 1.5,
+        "result": [
+          {
+            "id": "open-gdb-explorer",
+            "x": 951.8651831896552,
+            "y": 78.97338362068966
+          },
+          {
+            "id": "open-arcgis-online-explorer",
+            "x": 1237.5727693965518,
+            "y": 165.92786637931036
+          }
+        ]
+      },
+      {
+        "size": {
+          "width": 1920,
+          "height": 1080
+        },
+        "zoom": 1,
+        "result": [
+          {
+            "id": "open-gdb-explorer",
+            "x": 1573.3926508620689,
+            "y": 55.17844827586207
+          },
+          {
+            "id": "open-arcgis-online-explorer",
+            "x": 1776.8871336206896,
+            "y": 117.11155172413793
+          }
+        ]
+      },
+      {
+        "size": {
+          "width": 1920,
+          "height": 1080
+        },
+        "zoom": 1.5,
+        "result": [
+          {
+            "id": "open-gdb-explorer",
+            "x": 1400.0880181779532,
+            "y": 82.76896425444505
+          },
+          {
+            "id": "open-arcgis-online-explorer",
+            "x": 1705.3376656052162,
+            "y": 175.67103086274247
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "controls-reuse-context-geosynchronous-projection-and-unclipped-zoom",
+    "passed": true,
+    "contexts": 1,
+    "proof": {
+      "edgeAlpha": 0,
+      "centerAlpha": 255,
+      "orbitEdgeAlpha": 0,
+      "nonemptyFrames": 48,
+      "viewportFactor": 1.6,
+      "effectiveScale": 0.78125,
+      "bodyExtent": 0.625,
+      "atmosphereExtent": 0.71602745233685,
+      "satelliteExtent": 0.9648437499999999,
+      "projections": [
+        {
+          "phi": 0.35,
+          "actual": [
+            0.932992,
+            0.398179
+          ],
+          "expected": [
+            0.9329921098280887,
+            0.3981785225297521
+          ]
+        },
+        {
+          "phi": 0.75,
+          "actual": [
+            0.837263,
+            0.297591
+          ],
+          "expected": [
+            0.8372628379965268,
+            0.29759139855223293
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "real-coordinated-satellite-partial-limb-fragments",
+    "passed": true,
+    "insidePixels": 0,
+    "antialiasedBoundaryPixels": 0,
+    "outsidePixels": 91,
+    "candidate": {
+      "index": 4,
+      "phase": 4.064999999999692,
+      "p": {
+        "x": -0.00317743232779813,
+        "y": -0.7987199014324385,
+        "z": -0.8685829971738783,
+        "radius": 1.18,
+        "occluded": true
+      }
+    },
+    "method": "Actual WebGL fragment readback of coordinated twelve-satellite inclined-plane constellation."
+  },
+  {
+    "name": "reduced-motion-idle-hidden-and-resource-restoration",
+    "passed": true,
+    "frames": 13,
+    "globeFrames": 13,
+    "backgroundFrames": 10,
+    "contexts": 4,
+    "lost": 0,
+    "raf": [],
+    "cost": [
+      15.599999997764826,
+      11.699999999254942,
+      25.699999999254942,
+      48.599999997764826,
+      13.700000002980232,
+      9.5,
+      8.800000000745058,
+      0.19999999925494194,
+      0.10000000149011612,
+      0.10000000149011612,
+      9.5,
+      8.300000000745058,
+      8.400000002235174
+    ],
+    "resolution": [
+      1152,
+      1152
+    ],
+    "state": "ready",
+    "phi": 0.35,
+    "cameraPhi": 0.35,
+    "spinAngle": 0,
+    "theta": 0.18,
+    "viewportFactor": 1.6,
+    "effectiveScale": 0.625,
+    "pending": true,
+    "settings": {
+      "autoRotate": false,
+      "speed": 0.5,
+      "theta": 0.18,
+      "scale": 1,
+      "mapSamples": 32000,
+      "mapBrightness": 6,
+      "diffuse": 1.2,
+      "glow": 1,
+      "satellites": true
+    },
+    "satellites": {
+      "frames": 1,
+      "vertices": 96,
+      "bufferBytes": 2304,
+      "orbits": 12,
+      "synchronization": "common Earth-spin period",
+      "constellation": "Walker Delta 12/3/2, 60 degrees",
+      "active": true
+    },
+    "hasGdb": false
+  },
+  {
+    "name": "compact-panel-clears-logo-and-scrolls-at-short-viewports",
+    "passed": true,
+    "checks": [
+      {
+        "viewport": [
+          320,
+          568
+        ],
+        "logoBottom": 91.375,
+        "panelTop": 114,
+        "panelBottom": 506,
+        "scrollHeight": 406,
+        "clientHeight": 390,
+        "focusedResetVisible": true
+      },
+      {
+        "viewport": [
+          1440,
+          600
+        ],
+        "logoBottom": 209.21875,
+        "panelTop": 232,
+        "panelBottom": 538,
+        "scrollHeight": 406,
+        "clientHeight": 304,
+        "focusedResetVisible": true
+      },
+      {
+        "viewport": [
+          568,
+          320
+        ],
+        "logoBottom": 99.59375,
+        "panelTop": 122,
+        "panelBottom": 258,
+        "scrollHeight": 406,
+        "clientHeight": 134,
+        "focusedResetVisible": true
+      }
+    ]
+  },
+  {
+    "name": "actual-dpr-contexts-and-bounded-render-buffers",
+    "passed": true,
+    "checks": [
+      {
+        "stats": {
+          "frames": 1,
+          "globeFrames": 1,
+          "backgroundFrames": 1,
+          "contexts": 1,
+          "lost": 0,
+          "raf": [],
+          "cost": [
+            10.800000000745058
+          ],
+          "resolution": [
+            880,
+            880
+          ],
+          "state": "ready",
+          "phi": 0.35,
+          "cameraPhi": 0.35,
+          "spinAngle": 0,
+          "theta": 0.18,
+          "viewportFactor": 1.6,
+          "effectiveScale": 0.625,
+          "pending": true,
+          "settings": {
+            "autoRotate": false,
+            "speed": 0.5,
+            "theta": 0.18,
+            "scale": 1,
+            "mapSamples": 32000,
+            "mapBrightness": 6,
+            "diffuse": 1.2,
+            "glow": 1,
+            "satellites": true
+          },
+          "satellites": {
+            "frames": 1,
+            "vertices": 96,
+            "bufferBytes": 2304,
+            "orbits": 12,
+            "synchronization": "common Earth-spin period",
+            "constellation": "Walker Delta 12/3/2, 60 degrees",
+            "active": true
+          },
+          "hasGdb": false
+        },
+        "dpr": 2,
+        "width": 586.546875,
+        "background": [
+          585,
+          1266
+        ]
+      },
+      {
+        "stats": {
+          "frames": 2,
+          "globeFrames": 2,
+          "backgroundFrames": 2,
+          "contexts": 1,
+          "lost": 0,
+          "raf": [],
+          "cost": [
+            18.5,
+            13.600000001490116
+          ],
+          "resolution": [
+            1413,
+            1413
+          ],
+          "state": "ready",
+          "phi": 0.35,
+          "cameraPhi": 0.35,
+          "spinAngle": 0,
+          "theta": 0.18,
+          "viewportFactor": 1.6,
+          "effectiveScale": 0.625,
+          "pending": false,
+          "settings": {
+            "autoRotate": false,
+            "speed": 0.5,
+            "theta": 0.18,
+            "scale": 1,
+            "mapSamples": 32000,
+            "mapBrightness": 6,
+            "diffuse": 1.2,
+            "glow": 1,
+            "satellites": true
+          },
+          "satellites": {
+            "frames": 2,
+            "vertices": 96,
+            "bufferBytes": 2304,
+            "orbits": 12,
+            "synchronization": "common Earth-spin period",
+            "constellation": "Walker Delta 12/3/2, 60 degrees",
+            "active": true
+          },
+          "hasGdb": false
+        },
+        "dpr": 3,
+        "width": 1152,
+        "background": [
+          2108,
+          1185
+        ]
+      }
+    ]
+  },
+  {
+    "name": "twelve-coordinated-satellites-coverage-common-rate-pause-and-hidden",
+    "passed": true,
+    "geometry": {
+      "ring": [
+        {
+          "inclination": 1.0471975511965976,
+          "node": 0,
+          "phase": 0,
+          "radius": 1.18
+        },
+        {
+          "inclination": 1.0471975511965976,
+          "node": 0,
+          "phase": 1.5707963267948966,
+          "radius": 1.18
+        },
+        {
+          "inclination": 1.0471975511965976,
+          "node": 0,
+          "phase": 3.141592653589793,
+          "radius": 1.18
+        },
+        {
+          "inclination": 1.0471975511965976,
+          "node": 0,
+          "phase": 4.71238898038469,
+          "radius": 1.18
+        },
+        {
+          "inclination": 1.0471975511965976,
+          "node": 2.0943951023931953,
+          "phase": 1.0471975511965976,
+          "radius": 1.18
+        },
+        {
+          "inclination": 1.0471975511965976,
+          "node": 2.0943951023931953,
+          "phase": 2.617993877991494,
+          "radius": 1.18
+        },
+        {
+          "inclination": 1.0471975511965976,
+          "node": 2.0943951023931953,
+          "phase": 4.1887902047863905,
+          "radius": 1.18
+        },
+        {
+          "inclination": 1.0471975511965976,
+          "node": 2.0943951023931953,
+          "phase": 5.759586531581287,
+          "radius": 1.18
+        },
+        {
+          "inclination": 1.0471975511965976,
+          "node": 4.1887902047863905,
+          "phase": 2.0943951023931953,
+          "radius": 1.18
+        },
+        {
+          "inclination": 1.0471975511965976,
+          "node": 4.1887902047863905,
+          "phase": 3.665191429188092,
+          "radius": 1.18
+        },
+        {
+          "inclination": 1.0471975511965976,
+          "node": 4.1887902047863905,
+          "phase": 5.235987755982988,
+          "radius": 1.18
+        },
+        {
+          "inclination": 1.0471975511965976,
+          "node": 4.1887902047863905,
+          "phase": 6.8067840827778845,
+          "radius": 1.18
+        }
+      ],
+      "minSeparationDegrees": 25.00783323468505,
+      "latitudeRangeDegrees": [
+        -59.999999999999986,
+        59.999999999999986
+      ],
+      "maxCentroid": 2.6009284745375385e-16,
+      "worstSampledNearestDegrees": 46.67757296761596,
+      "phaseSamples": 720,
+      "groundSamples": 600,
+      "coveragePhaseSamples": 48,
+      "uncoveredSamples": 0,
+      "sampledGroundDirections": 28800
+    },
+    "sharedSpinDelta": 0.4666499999999996,
+    "phiDelta": 0.4666499999999995,
+    "cameraPhiDelta": -1.1102230246251565e-16,
+    "gpuBefore": {
+      "view": [
+        0.3499999940395355,
+        0.18000000715255737
+      ],
+      "phase": 0.01668200083076954,
+      "earthView": [
+        0.3666819930076599,
+        0.18000000715255737
+      ]
+    },
+    "gpuAfter": {
+      "view": [
+        0.3499999940395355,
+        0.18000000715255737
+      ],
+      "phase": 0.4833320081233978,
+      "earthView": [
+        0.8333320021629333,
+        0.18000000715255737
+      ]
+    },
+    "positionsWhilePausedUnchanged": true,
+    "framesWhileHidden": 0,
+    "limitation": "Illustrative common-period inclined constellation; sampled coverage, not a proof of a mathematical optimum or physical GEO altitude."
+  }
+]

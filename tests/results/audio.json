@@ -1,0 +1,111 @@
+{
+  "result": "PASS",
+  "realWebAudio": true,
+  "results": [
+    {
+      "mode": "file",
+      "result": "PASS",
+      "tracks": [
+        {
+          "title": "Cybernoid II",
+          "composer": "Jeroen Tel",
+          "subtune": 1,
+          "backend": "scriptprocessor",
+          "pcmRms": 0.12554549519429897,
+          "actualGraphRms": 0.016479012976890507,
+          "bufferFrames": 2048
+        },
+        {
+          "title": "ACE II",
+          "composer": "Rob Hubbard",
+          "subtune": 1,
+          "backend": "scriptprocessor",
+          "pcmRms": 0.1504107804009728,
+          "actualGraphRms": 0.02882087009092694,
+          "bufferFrames": 2048
+        },
+        {
+          "title": "Last Ninja 2 · Central Park",
+          "composer": "Matt Gray",
+          "subtune": 2,
+          "backend": "scriptprocessor",
+          "pcmRms": 0.040945217846663974,
+          "actualGraphRms": 0.011680982365180528,
+          "bufferFrames": 2048
+        }
+      ],
+      "contextsCreated": 1,
+      "decodedBytes": 51233
+    },
+    {
+      "mode": "http",
+      "result": "PASS",
+      "tracks": [
+        {
+          "title": "Cybernoid II",
+          "composer": "Jeroen Tel",
+          "subtune": 1,
+          "backend": "audio-worklet",
+          "pcmRms": 0.13920597897697606,
+          "actualGraphRms": 0.0243944448636273,
+          "bufferFrames": 128
+        },
+        {
+          "title": "ACE II",
+          "composer": "Rob Hubbard",
+          "subtune": 1,
+          "backend": "audio-worklet",
+          "pcmRms": 0.10321765951217819,
+          "actualGraphRms": 0.02097950032367869,
+          "bufferFrames": 128
+        },
+        {
+          "title": "Last Ninja 2 · Central Park",
+          "composer": "Matt Gray",
+          "subtune": 2,
+          "backend": "audio-worklet",
+          "pcmRms": 0.04560527071572681,
+          "actualGraphRms": 0.00663711302380903,
+          "bufferFrames": 128
+        }
+      ],
+      "contextsCreated": 1,
+      "decodedBytes": 51233
+    },
+    {
+      "mode": "file-forced-fallback",
+      "result": "PASS",
+      "tracks": [
+        {
+          "title": "Cybernoid II",
+          "composer": "Jeroen Tel",
+          "subtune": 1,
+          "backend": "scriptprocessor",
+          "pcmRms": 0.11169810189853484,
+          "actualGraphRms": 0.021978922196614355,
+          "bufferFrames": 2048
+        },
+        {
+          "title": "ACE II",
+          "composer": "Rob Hubbard",
+          "subtune": 1,
+          "backend": "scriptprocessor",
+          "pcmRms": 0.17101129654498295,
+          "actualGraphRms": 0.020979654562216524,
+          "bufferFrames": 2048
+        },
+        {
+          "title": "Last Ninja 2 · Central Park",
+          "composer": "Matt Gray",
+          "subtune": 2,
+          "backend": "scriptprocessor",
+          "pcmRms": 0.040945217846663974,
+          "actualGraphRms": 0.011680982365180528,
+          "bufferFrames": 2048
+        }
+      ],
+      "contextsCreated": 1,
+      "decodedBytes": 51233
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+# Local browser/test output
+__pycache__/
+*.py[cod]
+.pytest_cache/
+test_reports/
+.cache/
+
+# Generated release archives stay outside the app repository.
+*.zip
+
+# Editor and OS metadata
+.DS_Store
+Thumbs.db
+.vscode/

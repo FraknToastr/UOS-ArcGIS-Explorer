@@ -1,0 +1,38 @@
+UOS Explorer Suite — C64 SID jukebox credits
+
+Cybernoid II — Jeroen Tel
+PSID copyright field: 1988 Hewson
+Subtune 1 of 2 (main music)
+https://www.hvsc.c64.org/download/C64Music/MUSICIANS/T/Tel_Jeroen/Cybernoid_II.sid
+
+ACE II — Rob Hubbard
+PSID copyright field: 1987 Cascade Games
+Subtune 1 of 1
+https://www.hvsc.c64.org/download/C64Music/MUSICIANS/H/Hubbard_Rob/ACE_II.sid
+
+Last Ninja 2 — Matt Gray
+PSID copyright field: 1988 System 3
+Subtune 2 of 13: Central Park in-game theme (not subtune 1's loader music)
+https://www.hvsc.c64.org/download/C64Music/MUSICIANS/G/Gray_Matt/Last_Ninja_2.sid
+Subtune reference: https://www.slayradio.org/sidinfo/MUSICIANS/G/Gray_Matt/Last_Ninja_2.sid
+
+The actual PSID program/data bytes are bundled in launcher/sid-tracks.js using
+base64 for direct-from-disk loading. They are not commercial MP3 recordings,
+imitations, or rendered whole-track PCM. Playback executes the original tune
+programs through a local 6510/SID emulator.
+
+Music copyrights remain with their respective rights holders. The above PSID
+credit fields identify the supplied files; they do not establish current rights
+ownership or grant a licence. These tunes are included for the requested private
+evaluation. They are not covered by the emulator's permissive licence, a Creative
+Commons licence, or a newly granted redistribution licence. Any public/commercial
+deployment needs the relevant rights-holder permissions.
+HVSC copyright information: https://www.hvsc.c64.org/info
+
+Emulator: Hermit jsSID 0.9.1 by Mihaly Horvath (Hermit), 2016.
+https://github.com/og2t/jsSID
+Adapted CPU/SID source: vendor/sid-core.js
+Retained upstream README and licence statement: vendor/jsSID-README.txt
+Adaptation: supplied byte-array loading, injected sample rate, isolated state,
+explicit 6581 model, deterministic restart, streaming AudioWorklet output and
+bounded ScriptProcessor fallback. No tune transcription or replacement music.

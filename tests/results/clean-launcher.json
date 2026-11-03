@@ -1,0 +1,518 @@
+[
+  {
+    "name": "real-globe-defaults-and-offline",
+    "passed": true,
+    "frames": 1,
+    "globeFrames": 1,
+    "backgroundFrames": 1,
+    "contexts": 1,
+    "lost": 0,
+    "raf": [],
+    "cost": [
+      12.900000000372529
+    ],
+    "resolution": [
+      720,
+      720
+    ],
+    "state": "ready",
+    "phi": 0.35,
+    "theta": 0.18,
+    "satelliteTime": 0,
+    "pending": true,
+    "settings": {
+      "autoRotate": false,
+      "speed": 0.15,
+      "theta": 0.18,
+      "scale": 1,
+      "mapSamples": 16000,
+      "mapBrightness": 6,
+      "diffuse": 1.2,
+      "glow": 1,
+      "markers": false,
+      "satellites": true,
+      "satelliteSpeed": 1
+    },
+    "satellites": {
+      "frames": 1,
+      "vertices": 96,
+      "bufferBytes": 2304,
+      "orbits": 4,
+      "active": true
+    },
+    "hasGdb": false
+  },
+  {
+    "name": "alpha-logo-geometry-no-overlap-and-holes",
+    "passed": true,
+    "overlap": 0,
+    "totalA": 110472,
+    "totalB": 72999,
+    "emptyA": 1959,
+    "emptyB": 1567,
+    "samples": [
+      {
+        "x": 1559,
+        "y": 77,
+        "id": "open-gdb-explorer"
+      },
+      {
+        "x": 1564,
+        "y": 80,
+        "id": "open-gdb-explorer"
+      },
+      {
+        "x": 1756,
+        "y": 344,
+        "id": "open-arcgis-online-explorer"
+      }
+    ],
+    "viewBox": "0 0 2170 725"
+  },
+  {
+    "name": "responsive-logo-hit-testing-dpr-zoom",
+    "passed": true,
+    "checked": [
+      {
+        "size": {
+          "width": 390,
+          "height": 844
+        },
+        "zoom": 1,
+        "result": [
+          {
+            "id": "open-gdb-explorer",
+            "x": 217.43090517241376,
+            "y": 24.820689655172412
+          },
+          {
+            "id": "open-arcgis-online-explorer",
+            "x": 320.5978017241379,
+            "y": 56.21931034482758
+          }
+        ]
+      },
+      {
+        "size": {
+          "width": 390,
+          "height": 844
+        },
+        "zoom": 1.5,
+        "result": [
+          {
+            "id": "open-gdb-explorer",
+            "x": 131.13853762922616,
+            "y": 37.231034482758616
+          },
+          {
+            "id": "open-arcgis-online-explorer",
+            "x": 285.8888824568124,
+            "y": 84.32896551724139
+          }
+        ]
+      },
+      {
+        "size": {
+          "width": 768,
+          "height": 1024
+        },
+        "zoom": 1,
+        "result": [
+          {
+            "id": "open-gdb-explorer",
+            "x": 594.4430280172413,
+            "y": 28.07769396551724
+          },
+          {
+            "id": "open-arcgis-online-explorer",
+            "x": 696.0237176724138,
+            "y": 58.99355603448276
+          }
+        ]
+      },
+      {
+        "size": {
+          "width": 768,
+          "height": 1024
+        },
+        "zoom": 1.5,
+        "result": [
+          {
+            "id": "open-gdb-explorer",
+            "x": 507.6762531464675,
+            "y": 42.10872844827586
+          },
+          {
+            "id": "open-arcgis-online-explorer",
+            "x": 660.047287629226,
+            "y": 88.48252155172413
+          }
+        ]
+      },
+      {
+        "size": {
+          "width": 1440,
+          "height": 960
+        },
+        "zoom": 1,
+        "result": [
+          {
+            "id": "open-gdb-explorer",
+            "x": 1114.5767887931033,
+            "y": 52.6489224137931
+          },
+          {
+            "id": "open-arcgis-online-explorer",
+            "x": 1305.0485129310346,
+            "y": 110.61857758620691
+          }
+        ]
+      },
+      {
+        "size": {
+          "width": 1440,
+          "height": 960
+        },
+        "zoom": 1.5,
+        "result": [
+          {
+            "id": "open-gdb-explorer",
+            "x": 951.8651831896552,
+            "y": 78.97338362068966
+          },
+          {
+            "id": "open-arcgis-online-explorer",
+            "x": 1237.5727693965518,
+            "y": 165.92786637931036
+          }
+        ]
+      },
+      {
+        "size": {
+          "width": 1920,
+          "height": 1080
+        },
+        "zoom": 1,
+        "result": [
+          {
+            "id": "open-gdb-explorer",
+            "x": 1573.3926508620689,
+            "y": 55.17844827586207
+          },
+          {
+            "id": "open-arcgis-online-explorer",
+            "x": 1776.8871336206896,
+            "y": 117.11155172413793
+          }
+        ]
+      },
+      {
+        "size": {
+          "width": 1920,
+          "height": 1080
+        },
+        "zoom": 1.5,
+        "result": [
+          {
+            "id": "open-gdb-explorer",
+            "x": 1400.0880181779532,
+            "y": 82.76896425444505
+          },
+          {
+            "id": "open-arcgis-online-explorer",
+            "x": 1705.3376656052162,
+            "y": 175.67103086274247
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "controls-reuse-context-and-cobe-anchor-projection",
+    "passed": true,
+    "contexts": 1,
+    "projection": {
+      "expected": [
+        0.11056029666295492,
+        0.6252940561868385
+      ],
+      "actual": [
+        0.11055999999999999,
+        0.625294
+      ]
+    }
+  },
+  {
+    "name": "real-satellite-front-back-partial-limb-fragments",
+    "passed": true,
+    "insidePixels": 0,
+    "outsidePixels": 72,
+    "candidate": {
+      "index": 1,
+      "t": 11.490000000000396,
+      "p": {
+        "x": 0.011726971958995497,
+        "y": -0.7988165379635508,
+        "z": -0.7267424693827933,
+        "radius": 1.08,
+        "occluded": true
+      }
+    },
+    "method": "Actual WebGL mesh fragment readback. Behind-Earth partial body, not DOM/CSS clipping."
+  },
+  {
+    "name": "reduced-motion-idle-hidden-and-resource-restoration",
+    "passed": true,
+    "frames": 17,
+    "globeFrames": 17,
+    "backgroundFrames": 13,
+    "contexts": 4,
+    "lost": 0,
+    "raf": [],
+    "cost": [
+      12.900000000372529,
+      11.600000000093132,
+      23.100000000093132,
+      56.5,
+      88.09999999962747,
+      288.39999999990687,
+      145.60000000009313,
+      0.10000000009313226,
+      0.20000000018626451,
+      0.20000000018626451,
+      0.10000000009313226,
+      8.899999999906868,
+      8,
+      7.899999999906868,
+      9.299999999813735,
+      9.100000000093132,
+      8.5
+    ],
+    "resolution": [
+      720,
+      720
+    ],
+    "state": "ready",
+    "phi": 0.35,
+    "theta": 0.18,
+    "satelliteTime": 0,
+    "pending": false,
+    "settings": {
+      "autoRotate": false,
+      "speed": 0.15,
+      "theta": 0.18,
+      "scale": 1,
+      "mapSamples": 16000,
+      "mapBrightness": 6,
+      "diffuse": 1.2,
+      "glow": 1,
+      "markers": false,
+      "satellites": true,
+      "satelliteSpeed": 1
+    },
+    "satellites": {
+      "frames": 2,
+      "vertices": 96,
+      "bufferBytes": 2304,
+      "orbits": 4,
+      "active": true
+    },
+    "hasGdb": false
+  },
+  {
+    "name": "compact-panel-clears-logo-and-scrolls-at-short-viewports",
+    "passed": true,
+    "checks": [
+      {
+        "viewport": [
+          320,
+          568
+        ],
+        "logoBottom": 91.375,
+        "panelTop": 114,
+        "panelBottom": 506,
+        "scrollHeight": 465,
+        "clientHeight": 390,
+        "focusedResetVisible": true
+      },
+      {
+        "viewport": [
+          1440,
+          600
+        ],
+        "logoBottom": 209.21875,
+        "panelTop": 232,
+        "panelBottom": 538,
+        "scrollHeight": 465,
+        "clientHeight": 304,
+        "focusedResetVisible": true
+      },
+      {
+        "viewport": [
+          568,
+          320
+        ],
+        "logoBottom": 99.59375,
+        "panelTop": 122,
+        "panelBottom": 258,
+        "scrollHeight": 465,
+        "clientHeight": 134,
+        "focusedResetVisible": true
+      }
+    ]
+  },
+  {
+    "name": "actual-dpr-contexts-and-bounded-render-buffers",
+    "passed": true,
+    "checks": [
+      {
+        "stats": {
+          "frames": 2,
+          "globeFrames": 2,
+          "backgroundFrames": 2,
+          "contexts": 1,
+          "lost": 0,
+          "raf": [],
+          "cost": [
+            8.700000000186265,
+            4
+          ],
+          "resolution": [
+            550,
+            550
+          ],
+          "state": "ready",
+          "phi": 0.35,
+          "theta": 0.18,
+          "satelliteTime": 0,
+          "pending": false,
+          "settings": {
+            "autoRotate": false,
+            "speed": 0.15,
+            "theta": 0.18,
+            "scale": 1,
+            "mapSamples": 16000,
+            "mapBrightness": 6,
+            "diffuse": 1.2,
+            "glow": 1,
+            "markers": false,
+            "satellites": true,
+            "satelliteSpeed": 1
+          },
+          "satellites": {
+            "frames": 2,
+            "vertices": 96,
+            "bufferBytes": 2304,
+            "orbits": 4,
+            "active": true
+          },
+          "hasGdb": false
+        },
+        "dpr": 2,
+        "width": 366.59375,
+        "background": [
+          585,
+          1266
+        ]
+      },
+      {
+        "stats": {
+          "frames": 2,
+          "globeFrames": 2,
+          "backgroundFrames": 2,
+          "contexts": 1,
+          "lost": 0,
+          "raf": [],
+          "cost": [
+            17,
+            16
+          ],
+          "resolution": [
+            1080,
+            1080
+          ],
+          "state": "ready",
+          "phi": 0.35,
+          "theta": 0.18,
+          "satelliteTime": 0,
+          "pending": false,
+          "settings": {
+            "autoRotate": false,
+            "speed": 0.15,
+            "theta": 0.18,
+            "scale": 1,
+            "mapSamples": 16000,
+            "mapBrightness": 6,
+            "diffuse": 1.2,
+            "glow": 1,
+            "markers": false,
+            "satellites": true,
+            "satelliteSpeed": 1
+          },
+          "satellites": {
+            "frames": 2,
+            "vertices": 96,
+            "bufferBytes": 2304,
+            "orbits": 4,
+            "active": true
+          },
+          "hasGdb": false
+        },
+        "dpr": 3,
+        "width": 720,
+        "background": [
+          2108,
+          1185
+        ]
+      }
+    ]
+  },
+  {
+    "name": "integrated-orbital-time-speed-reduced-motion-and-hidden",
+    "passed": true,
+    "before": 0.033365999999999986,
+    "after": 0.49996600000000035,
+    "phiDelta": 0.06999,
+    "speedChange": {
+      "before": 0.49996600000000035,
+      "after": 0.49996600000000035
+    },
+    "framesWhileHidden": 0,
+    "cpuDrawMs": [
+      12.900000000372529,
+      11.600000000093132,
+      23.100000000093132,
+      56.5,
+      88.09999999962747,
+      288.39999999990687,
+      145.60000000009313,
+      0.10000000009313226,
+      0.20000000018626451,
+      0.20000000018626451,
+      0.10000000009313226,
+      8.899999999906868,
+      8,
+      7.899999999906868,
+      9.299999999813735,
+      9.100000000093132,
+      8.5,
+      15.699999999720603,
+      11,
+      8,
+      13.700000000186265,
+      8.700000000186265,
+      0,
+      11.699999999720603,
+      9.800000000279397,
+      0.10000000009313226,
+      10.400000000372529
+    ],
+    "rafCadenceMs": [
+      16.666000000001077,
+      16.69999999999891,
+      316.60000000000036,
+      16.700000000000728,
+      199.89999999999964
+    ]
+  }
+]

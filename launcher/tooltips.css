@@ -1,0 +1,2 @@
+#uos-accessible-tip{position:fixed;z-index:2147483647;pointer-events:none;box-sizing:border-box;padding:9px 12px;border:1px solid #7ce8fabb;border-radius:8px;background:#071522f5;color:#f0fbff;box-shadow:0 5px 20px #0008;font:13px/1.45 "Segoe UI",sans-serif;letter-spacing:normal;text-align:left;overflow-wrap:anywhere;white-space:normal;overflow:hidden}
+#uos-accessible-tip[hidden]{display:none!important}
