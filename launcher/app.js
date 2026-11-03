@@ -2,7 +2,7 @@
 (()=>{
 'use strict';
 const $=id=>document.getElementById(id),reduced=matchMedia('(prefers-reduced-motion: reduce)');
-const defaults={autoRotate:!reduced.matches,speed:.5,theta:.18,scale:1,mapSamples:32000,mapBrightness:6,diffuse:1.2,glow:1,satellites:true,craftType:'satellites'};
+const defaults={autoRotate:!reduced.matches,speed:.5,theta:.18,scale:1,mapSamples:32000,mapBrightness:6,diffuse:1.2,glow:1,satellites:true,craftType:'ufos'};
 const settings={...defaults},wrap=$('wrap');let canvas=$('globe'),satellitesCanvas=$('satellites'),glContext=null;
 const viewportFactor=Number(getComputedStyle(wrap).getPropertyValue('--globe-viewport'))||1.6;
 const effectiveScale=()=>settings.scale/viewportFactor;

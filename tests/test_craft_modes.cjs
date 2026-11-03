@@ -29,7 +29,7 @@ const root=process.env.UOS_SUITE_ROOT||path.resolve(__dirname,'..'),out=process.
   await page.setViewportSize({width:1440,height:960});await page.waitForTimeout(180);return {desktopSizeMultiplier:1.25,measurements,globeOverlapPolicy:'No globe avoidance: enlarged corner art may overlap Earth.'};
  });
  await run('ufo-selector-preserves-phase-and-reuses-one-buffer-and-program',async()=>{
-  assert.equal(await page.locator('#control-craftType').inputValue(),'satellites');assert.equal(await page.locator('#control-craftType').getAttribute('aria-label'),'Orbiting craft type');assert.equal(await page.locator('#control-craftType').getAttribute('title'),null);
+ assert.equal(await page.locator('#control-craftType').inputValue(),'ufos');assert.equal(await page.locator('#control-craftType').getAttribute('aria-label'),'Orbiting craft type');assert.equal(await page.locator('#control-craftType').getAttribute('title'),null);
   await page.emulateMedia({reducedMotion:'no-preference'});await page.locator('#control-autoRotate').evaluate(e=>{e.checked=true;e.dispatchEvent(new Event('input',{bubbles:true}))});await page.waitForTimeout(300);await page.locator('#control-autoRotate').evaluate(e=>{e.checked=false;e.dispatchEvent(new Event('input',{bubbles:true}))});await page.emulateMedia({reducedMotion:'reduce'});await page.waitForFunction(()=>!UOSLauncher.stats().pending);
   const before=await page.evaluate(()=>{
    const g=document.querySelector('#satellites').getContext('webgl'),calls={createBuffer:0,createProgram:0,bufferData:0};window.__craftResources={g,calls,program:g.getParameter(g.CURRENT_PROGRAM),buffer:g.getParameter(g.ARRAY_BUFFER_BINDING),original:{}};
