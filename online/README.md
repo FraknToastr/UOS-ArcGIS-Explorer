@@ -32,6 +32,8 @@ Content rows use a saturated dark green for root resources, then progressively l
 
 ## Graph connections and palettes
 
+The **Version V1 / V2** selector switches all three graph layouts. **V1** is selected on every fresh page and restores the original geometry, curved connectors, Roomy/Balanced/Compact density options, spacing, and zoom-fitting behaviour. **V2** keeps labels and symbols at native size when fitting and routes connectors around label areas; its density options are Roomy/Normal/Compact. Both provide Dependency, Balanced, and Radial layouts and all supporting controls. Each version remembers its own layout choices, density, spacing, and auto-fit settings for the session. Selection, filters, label cards, connector highlighting, and colour palettes are shared. Switching to a version with auto-fit disabled preserves the current camera; manual **Fit** always works.
+
 Clicking a Graph map node makes its **direct incoming and outgoing connectors** thicker and fully opaque. Second-degree connectors are lighter; more distant connectors are faint. Direct connectors draw on top, and their thickness remains readable when zooming.
 
 **Isolate first-degree** keeps the selected node, its immediate parents and children, and only the connectors touching that node. It excludes links between neighbours and deeper branches. The node-type filters still apply. To centre isolation on another node, select it and press the button again. **Isolate branch** retains the existing downstream-branch behaviour. **Show all** restores the complete graph view.

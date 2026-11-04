@@ -4,11 +4,13 @@ const fixture={format:'arcgis-explorer',version:2,nodes:[{id:'root',kind:'webmap
 (async()=>{const browser=await launchBrowser();try{const page=await browser.newPage(),errors=[],results=[];page.on('pageerror',e=>errors.push(e.message));
 await page.goto(pathToFileURL(path.resolve(__dirname,'../online/index.html')).href);await page.locator('#importFile').setInputFiles({name:'mixed.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(fixture))});
 await page.locator('[data-view="dependencies"]').click();await page.locator('#selection-dependencies').selectOption('root');await page.locator('[data-graph-view="first"]').click();
+await page.locator('#graphV2Btn').click();
 for(const size of [{width:1920,height:1080},{width:1366,height:768},{width:900,height:740},{width:390,height:844}]){await page.setViewportSize(size);await page.waitForTimeout(500);
  for(const layout of ['balanced','radial','dependency']){await page.locator('[data-graph-layout="'+layout+'"]').click();await page.waitForTimeout(350);
  const state=await page.evaluate(()=>UOSGraph.stats());assert.equal(state.nodes,31);assert.equal(state.edges,30);const canvas=await page.locator('#graph').boundingBox(),boxes=await page.locator('.graph-node-hit').evaluateAll(nodes=>nodes.map(n=>{const r=n.getBoundingClientRect();return {x:r.x,y:r.y,w:r.width,h:r.height}}));
  for(let i=0;i<boxes.length;i++){const a=boxes[i];assert(a.x>=canvas.x-1&&a.y>=canvas.y-1&&a.x+a.w<=canvas.x+canvas.width+1&&a.y+a.h<=canvas.y+canvas.height+1,'all nodes fit '+JSON.stringify({size,layout,a,canvas}));for(let j=i+1;j<boxes.length;j++){const b=boxes[j];assert(a.x+a.w<=b.x+.5||b.x+b.w<=a.x+.5||a.y+a.h<=b.y+.5||b.y+b.h<=a.y+.5,'no card overlap')}}
- if(size.width>=1366&&layout==='balanced')assert(state.transform.k*14>=13,'desktop labels stay readable '+JSON.stringify(state));
+ assert(state.transform.k<=1.001,'fitting distributes positions without enlarging labels or symbols');
+ assert(await page.locator('.graph-node-label').evaluateAll(labels=>labels.every(label=>getComputedStyle(label).display!=='none')),'dense overviews retain resource names');
  results.push({size,layout,k:state.transform.k,labelPixels:state.transform.k*14});
  if(size.width===1366&&layout==='balanced')await page.screenshot({path:'/tmp/uos-graph-balanced.png'});
  }

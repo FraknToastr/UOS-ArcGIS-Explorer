@@ -61,8 +61,15 @@ async function restJSON(url,params={},opt={}){
 function extractItemId(v){ const s=String(v||'').trim(); const m=s.match(/(?:experience|items|item(?:id)?[=\/])\/?([0-9a-f]{32})/i)||s.match(/^([0-9a-f]{32})$/i)||s.match(/([0-9a-f]{32})/i);return m?m[1]:''; }
 function classifyItem(item){const t=(item?.type||'').toLowerCase();if(t==='web experience')return'experience';if(t==='web map')return'webmap';if(t==='web scene')return'webscene';if(/feature service|map service|scene service|vector tile service|image service/.test(t))return'service';return'other';}
 function nodeId(prefix,key){return `${prefix}:${key}`;}
-function normalizeResourceRoles(roles){return Array.isArray(roles)?[...new Set(roles.filter(role=>['operational','basemap','system','metadata'].includes(role)))]:[]}
-function explicitResourceRoles(node){const meta=node.meta||{},types=[node.type,meta.type,...(Array.isArray(meta.typeKeywords)?meta.typeKeywords:[])].filter(value=>typeof value==='string').map(value=>value.toLowerCase()),roles=[];if(meta.isSystem===true||meta.isSystemLayer===true||meta.isSystemTable===true||types.some(type=>['system','system layer','system table','topology','utility network','trace network'].includes(type)))roles.push('system');if(meta.isMetadata===true||types.some(type=>['metadata','metadata document','iso metadata','fgdc metadata'].includes(type)))roles.push('metadata');return roles}
+function normalizeResourceRoles(roles){return Array.isArray(roles)?[...new Set(roles.map(role=>String(role||'').trim().toLowerCase()).filter(role=>['operational','basemap','system','metadata'].includes(role)))]:[]}
+function explicitResourceRoles(node){
+ const meta=node?.meta||{},normalise=value=>String(value).trim().toLowerCase(),types=[node?.type,meta.type].filter(value=>typeof value==='string').map(normalise),keywords=(Array.isArray(meta.typeKeywords)?meta.typeKeywords:[]).filter(value=>typeof value==='string').map(normalise),roles=[];
+ if(meta.isSystem===true||meta.isSystemLayer===true||meta.isSystemTable===true||[...types,...keywords].some(type=>['system','system layer','system table','topology','utility network','trace network'].includes(type)))roles.push('system');
+ // ArcGIS uses the plain "Metadata" keyword for items that HAVE metadata,
+ // including ordinary services. It does not make the item a metadata resource.
+ if(meta.isMetadata===true||types.some(type=>['metadata','metadata document','iso metadata','fgdc metadata'].includes(type))||keywords.some(type=>['metadata document','iso metadata','fgdc metadata'].includes(type)))roles.push('metadata');
+ return roles;
+}
 function resourceVisible(node,{surface='content'}={}){if(!node)return false;const roles=normalizeResourceRoles(node.roles),visibility=ui.visibility[surface]||{system:false,metadata:false};if(roles.includes('operational'))return true;if(roles.includes('metadata')&&!visibility.metadata)return false;if((roles.includes('system')||roles.includes('basemap'))&&!visibility.system)return false;return true}
 function tagResourceRole(id,role,seen=new Set()){if(!role||seen.has(id))return;seen.add(id);const node=state.nodes.get(id);if(!node)return;node.roles=normalizeResourceRoles([...(node.roles||[]),role]);for(const edge of state.edges.values())if(edge.source===id&&edge.relation==='contains')tagResourceRole(edge.target,role,seen)}
 function addNode(n){if(state.nodes.size>=1200&&!state.nodes.has(n.id))throw new Error('Scan safety limit: 1,200 resources. Narrow the input.');if(!n.portal)n.portal=portal();const prev=state.nodes.get(n.id),roles=normalizeResourceRoles([...(prev?.roles||[]),...normalizeResourceRoles(n.roles),...explicitResourceRoles(n)]);if(!prev)state.nodes.set(n.id,{kind:'other',title:n.id,...n,roles,x:0,y:0});else Object.assign(prev,n,{roles,meta:{...prev.meta,...n.meta}});return state.nodes.get(n.id);}
@@ -147,11 +154,13 @@ async function buildGraph(){
 
 function resetGraph(){state.nodes.clear();state.edges.clear();state.selected=null;graphAppearance.clicked=null;state.isolated=null;state.isolationMode='branch';scannedItems.clear();scanningItems.clear();scannedServices.clear();itemNodeIds.clear();clearSpatial();ui.levelLimit=1;ui.manualExpand.clear();ui.filterReveal=true;ui.demo=false;render();renderDetails();refreshIntegrated();}
 function visibleKind(kind){const cb=$(`input[data-kind="${kind}"]`);return cb?cb.checked:true}
-const graphLayouts={all:'dependency',branch:'dependency',first:'balanced'};
+const createGraphPreferences=()=>({layouts:{all:'dependency',branch:'dependency',first:'balanced'},autoFit:true,density:'balanced',spacing:135});
+const graphVersionPreferences={v1:createGraphPreferences(),v2:createGraphPreferences()};
+let graphLayoutVersion='v1',graphPreferences=graphVersionPreferences.v1,graphLayouts=graphPreferences.layouts;
 const graphAppearance={cards:false,clickOnly:true,clicked:null};
-const graphPreferences={autoFit:true,density:'balanced'};
-const graphDensity={roomy:{spacing:170,scale:1.08},balanced:{spacing:135,scale:1},compact:{spacing:100,scale:.88}};
-function graphNodeColor(node){const roles=normalizeResourceRoles(node?.roles);if(roles.includes('system'))return ROLE_COLORS.system;if(roles.includes('metadata'))return ROLE_COLORS.metadata;return KIND_COLORS[node?.kind]||KIND_COLORS.other}
+const graphDensity={roomy:{spacing:220,scale:1.24},balanced:{spacing:135,scale:1},compact:{spacing:72,scale:.72}};
+function graphEngine(){return graphLayoutVersion==='v1'?window.UOSGraphLayoutV1:window.UOSGraphLayout}
+function graphNodeColor(node){const roles=normalizeResourceRoles([...(node?.roles||[]),...explicitResourceRoles(node)]);if(roles.includes('system')||roles.includes('basemap'))return ROLE_COLORS.system;if(roles.includes('metadata'))return ROLE_COLORS.metadata;return KIND_COLORS[node?.kind]||KIND_COLORS.other}
 function graphAppearanceControls(){
  const svg=$('#graph');svg.classList.toggle('graph-cards-off',!graphAppearance.cards);svg.classList.toggle('graph-click-highlights',graphAppearance.clickOnly);
  $('#graphCardsBtn').setAttribute('aria-pressed',String(graphAppearance.cards));$('#graphClickHighlightsBtn').setAttribute('aria-pressed',String(graphAppearance.clickOnly));
@@ -175,39 +184,80 @@ function graphCalculate(){
  const box=graphViewport();if(box.width>1&&box.height>1)graphSize=box;
  const allowed=filteredSets(),nodes=[...state.nodes.values()].filter(n=>allowed.has(n.id)),edges=visibleGraphEdges(allowed),view=graphView(),layout=graphLayouts[view];
  const density=graphDensity[graphPreferences.density]||graphDensity.balanced;
- const key=[view,layout,state.isolated,state.selected,Math.round(graphSize.width),Math.round(graphSize.height),density.spacing,...nodes.map(n=>n.id+'|'+n.title+'|'+n.type),...edges.map(e=>e.id||e.source+'>'+e.target)].join('\n');
+ const key=[graphLayoutVersion,view,layout,state.isolated,state.selected,Math.round(graphSize.width),Math.round(graphSize.height),density.spacing,graphPreferences.spacing,...nodes.map(n=>n.id+'|'+n.title+'|'+n.type),...edges.map(e=>e.id||e.source+'>'+e.target)].join('\n');
  if(graphGeometry&&key===graphLayoutKey)return false;
  graphLayoutKey=key;
- graphGeometry=UOSGraphLayout.compute(nodes,edges,{...graphSize,layout,ego:view==='first',root:state.isolated,selected:state.selected,measure:graphMeasure,spacing:density.spacing,density:graphPreferences.density,densityScale:density.scale});
+ const sliderSpacing=graphPreferences.spacing;
+ graphGeometry=graphEngine().compute(nodes,edges,{...graphSize,layout,ego:view==='first',root:state.isolated,selected:state.selected,measure:graphMeasure,spacing:density.spacing*sliderSpacing/135,density:graphPreferences.density,densityScale:density.scale});
  for(const [id,p] of graphGeometry.positions){const n=state.nodes.get(id);n.x=p.x;n.y=p.y}
  return true;
 }
 function graphCancel(freeze=false){if(graphFrame)cancelAnimationFrame(graphFrame);graphFrame=0;graphAnimation=null;if(freeze)for(const [id,p] of graphCurrent){const node=state.nodes.get(id);if(node){node.x=p.x;node.y=p.y}}}
-function graphPath(edge,positions=graphCurrent){
- const a=positions.get(edge.source),b=positions.get(edge.target),am=graphGeometry.metrics.get(edge.source),bm=graphGeometry.metrics.get(edge.target);if(!a||!b||!am||!bm)return '';
- const ax=a.x+am.iconX,ay=a.y,bx=b.x+bm.iconX,by=b.y;
- if(edge.source===edge.target)return `M${ax+am.r},${ay} C${ax+70},${ay-80} ${ax-70},${ay-80} ${ax-am.r},${ay}`;
- const distance=Math.max(1,Math.hypot(bx-ax,by-ay)),dx=(bx-ax)/distance,dy=(by-ay)/distance,x1=ax+dx*(am.r+1),y1=ay+dy*(am.r+1),x2=bx-dx*(bm.r+5),y2=by-dy*(bm.r+5);
- const bend=Math.max(24,Math.abs(x2-x1)*.45),direction=x2>=x1?1:-1;
- return `M${x1},${y1} C${x1+bend*direction},${y1} ${x2-bend*direction},${y2} ${x2},${y2}`;
+let graphRouter=null,graphRouterKey='',graphRouterMetrics=null;
+function graphPath(edge){return graphLayoutVersion==='v1'?graphEngine().path(edge,graphCurrent,graphGeometry?.metrics||new Map()):graphRouter?.path(edge)||''}
+function graphPaint(){
+  for(const [id,p] of graphCurrent)graphNodeDOM.get(id)?.setAttribute('transform','translate('+p.x+','+p.y+')');
+  const key=[...graphCurrent].map(([id,p])=>id+':'+p.x.toFixed(2)+','+p.y.toFixed(2)).join('|');
+  if(graphLayoutVersion==='v2'&&(key!==graphRouterKey||graphRouterMetrics!==graphGeometry?.metrics)){
+    graphRouter=window.UOSGraphRouting.createRouter(graphCurrent,graphGeometry?.metrics||new Map());
+    graphRouterKey=key;graphRouterMetrics=graphGeometry?.metrics;
+  }
+  for(const entry of graphEdgeDOM)entry.element.setAttribute('d',graphPath(entry.edge));
+  applyTransform();
 }
-function graphPaint(){for(const [id,p] of graphCurrent)graphNodeDOM.get(id)?.setAttribute('transform',`translate(${p.x},${p.y})`);for(const entry of graphEdgeDOM)entry.element.setAttribute('d',graphPath(entry.edge));applyTransform()}
 function graphAnimate(to,camera=null){
  graphCancel();const from=new Map([...to].map(([id,p])=>[id,graphCurrent.get(id)||p]));
- if(graphReduced.matches||!graphCurrent.size){graphCurrent=new Map(to);if(camera)state.transform=camera;graphPaint();return}
+ if(graphReduced.matches||!graphCurrent.size||to.size>160){graphCurrent=new Map(to);if(camera)state.transform=camera;graphPaint();return}
  graphCurrent=new Map([...from].map(([id,p])=>[id,{...p}]));
  graphAnimation={from,to:new Map(to),cameraFrom:{...state.transform},cameraTo:camera||{...state.transform},start:performance.now()};
  const tick=now=>{graphFrame=0;if(!graphAnimation)return;const animation=graphAnimation,t=Math.min(1,(now-animation.start)/200),ease=1-(1-t)**3;for(const [id,p] of animation.to){const old=animation.from.get(id)||p,current=graphCurrent.get(id);current.x=old.x+(p.x-old.x)*ease;current.y=old.y+(p.y-old.y)*ease}for(const key of ['x','y','k'])state.transform[key]=animation.cameraFrom[key]+(animation.cameraTo[key]-animation.cameraFrom[key])*ease;graphPaint();if(t<1)graphFrame=requestAnimationFrame(tick);else graphAnimation=null};
  graphFrame=requestAnimationFrame(tick);
 }
 function graphCamera(next){graphAnimate(graphGeometry?.positions||new Map(),next)}
-function graphControls(){const view=graphView(),layout=graphLayouts[view];$$('[data-graph-view]').forEach(button=>{button.setAttribute('aria-pressed',String(button.dataset.graphView===view));button.disabled=button.dataset.graphView!=='all'&&!state.selected});$$('[data-graph-layout]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.graphLayout===layout)));$$('[data-graph-density]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.graphDensity===graphPreferences.density)));const fit=$('#graphAutoFitBtn');if(fit)fit.setAttribute('aria-pressed',String(graphPreferences.autoFit));const first=$('#firstDegreeBtn');if(first)first.setAttribute('aria-pressed',String(view==='first'))}
-function ensureGraphPreferencesUI(){const toolbar=$('.graph-toolbar');if(!toolbar||$('#graphDensityControl'))return;const group=document.createElement('div');group.id='graphDensityControl';group.className='graph-segmented';group.setAttribute('role','group');group.setAttribute('aria-label','Graph compactness');for(const [key,label,tip] of [['roomy','Roomy','Give nodes more breathing room'],['balanced','Balanced','Use balanced spacing'],['compact','Compact','Fit more nodes into the viewport']]){const button=document.createElement('button');button.type='button';button.dataset.graphDensity=key;button.dataset.tooltip=tip;button.textContent=label;button.setAttribute('aria-pressed',String(graphPreferences.density===key));group.appendChild(button)}const auto=document.createElement('button');auto.id='graphAutoFitBtn';auto.type='button';auto.dataset.tooltip='Fit automatically after graph changes';auto.textContent='Auto-fit';auto.setAttribute('aria-pressed',String(graphPreferences.autoFit));toolbar.insertBefore(group,$('#graphFitBtn'));toolbar.insertBefore(auto,$('#graphFitBtn'))}
+function graphControls(){
+ const view=graphView(),layout=graphLayouts[view];$('#graph').dataset.layoutVersion=graphLayoutVersion;
+ $$('[data-graph-version]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.graphVersion===graphLayoutVersion)));
+ $$('[data-graph-view]').forEach(button=>{button.setAttribute('aria-pressed',String(button.dataset.graphView===view));button.disabled=button.dataset.graphView!=='all'&&!state.selected});
+ $$('[data-graph-layout]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.graphLayout===layout)));
+ $$('[data-graph-density]').forEach(button=>{
+   button.setAttribute('aria-pressed',String(button.dataset.graphDensity===graphPreferences.density));
+   if(button.dataset.graphDensity==='balanced'){button.textContent=graphLayoutVersion==='v1'?'Balanced':'Normal';button.dataset.tooltip=graphLayoutVersion==='v1'?'Use balanced spacing':'Use normal spacing'}
+ });
+ const spacing=$('#spacingInput');if(spacing)spacing.value=graphPreferences.spacing;
+ const fit=$('#graphAutoFitBtn');if(fit)fit.setAttribute('aria-pressed',String(graphPreferences.autoFit));
+}
+function setGraphLayoutVersion(version){
+ if(!Object.hasOwn(graphVersionPreferences,version)||version===graphLayoutVersion)return;
+ graphCancel(true);state.dragging=null;state.panning=null;
+ graphLayoutVersion=version;graphPreferences=graphVersionPreferences[version];graphLayouts=graphPreferences.layouts;
+ graphLayoutKey='';graphRouter=null;graphRouterKey='';graphRouterMetrics=null;graphCurrent=new Map();
+ render();maybeFitGraph();
+}
+function setGraphDensity(value){
+ if(!Object.hasOwn(graphDensity,value))return;
+ graphPreferences.density=value;layoutGraph();render();maybeFitGraph();
+}
+function setGraphSpacing(value){
+ const spacing=Number(value);if(!Number.isFinite(spacing))return;
+ graphPreferences.spacing=Math.max(80,Math.min(220,spacing));layoutGraph();render();maybeFitGraph();
+}
+function setGraphAutoFit(enabled){
+ graphPreferences.autoFit=!!enabled;graphControls();if(graphPreferences.autoFit)fitGraph();
+}
+function ensureGraphPreferencesUI(){
+ const toolbar=$('.graph-toolbar');if(!toolbar||$('#graphDensityControl'))return;
+ const labelGroup=(group,text)=>{group.classList.add('graph-labelled-group');const label=document.createElement('span');label.className='graph-control-label';label.textContent=text;label.setAttribute('aria-hidden','true');group.prepend(label)};
+ const layout=$('[data-graph-layout]')?.parentElement;if(layout)labelGroup(layout,'Layout');
+ const group=document.createElement('div');group.id='graphDensityControl';group.className='graph-segmented';group.setAttribute('role','group');group.setAttribute('aria-label','Graph density');
+ for(const [key,label,tip] of [['roomy','Roomy','Give nodes more breathing room'],['balanced','Normal','Use normal spacing'],['compact','Compact','Fit more nodes into the viewport']]){const button=document.createElement('button');button.type='button';button.dataset.graphDensity=key;button.dataset.tooltip=tip;button.textContent=label;button.setAttribute('aria-pressed',String(graphPreferences.density===key));group.appendChild(button)}
+ labelGroup(group,'Density');
+ const auto=document.createElement('button');auto.id='graphAutoFitBtn';auto.type='button';auto.dataset.tooltip='Fit automatically after graph changes';auto.textContent='Auto-fit';auto.setAttribute('aria-pressed',String(graphPreferences.autoFit));toolbar.insertBefore(group,$('#graphFitBtn'));toolbar.insertBefore(auto,$('#graphFitBtn'));
+}
 function graphSelectionNotice(allowed){
  let notice=$('#graphHiddenSelection');if(!notice){notice=document.createElement('p');notice.id='graphHiddenSelection';notice.className='graph-hidden-selection';notice.setAttribute('role','status');$('#details').before(notice)}
  const hidden=state.selected&&!allowed.has(state.selected);notice.hidden=!hidden;notice.textContent=hidden?'The selected resource is hidden by graph filters. Its details remain available.':'';
  let focus=$('#graphFocusLabel');if(!focus){focus=document.createElement('div');focus.id='graphFocusLabel';focus.className='graph-focus-label';$('#graph').parentElement.appendChild(focus)}
- const selected=state.nodes.get(state.selected);focus.hidden=!selected||!allowed.has(selected.id)||state.transform.k>=13/14;focus.textContent=selected?selected.title+' · '+(selected.type||selected.kind):'';
+ const selected=state.nodes.get(state.selected);focus.hidden=graphLayouts[graphView()]==='radial'||!selected||!allowed.has(selected.id)||state.transform.k>=13/14;focus.textContent=selected?selected.title+' · '+(selected.type||selected.kind):'';
 }
 function render(){
  const changed=!state.dragging&&graphCalculate(),allowed=filteredSets(),ns=$('#nodes'),es=$('#edges');
@@ -232,17 +282,19 @@ function render(){
 function applyTransform(){
  $('#viewport').setAttribute('transform',`translate(${state.transform.x},${state.transform.y}) scale(${state.transform.k})`);
  const overview=state.transform.k<13/14;$('#graph').classList.toggle('graph-overview',overview);$('#graph').setAttribute('data-overview',String(overview));
- const focus=$('#graphFocusLabel');if(focus)focus.hidden=!overview||!state.selected||!graphGeometry?.positions.has(state.selected);
- let badge=$('#graphOverviewNote');if(!badge){badge=document.createElement('span');badge.id='graphOverviewNote';badge.className='graph-overview-note';badge.setAttribute('role','status');badge.textContent='Overview · all visible resources retained. Select a node, then Focus, Branch or First-degree for readable detail.';$('#graph').parentElement.appendChild(badge)}badge.hidden=!overview||!state.nodes.size;
+ const radial=graphLayouts[graphView()]==='radial';
+ const focus=$('#graphFocusLabel');if(focus)focus.hidden=radial||!overview||!state.selected||!graphGeometry?.positions.has(state.selected);
+ let badge=$('#graphOverviewNote');if(!badge){badge=document.createElement('span');badge.id='graphOverviewNote';badge.className='graph-overview-note';badge.setAttribute('role','status');badge.textContent='Overview · all visible resources retained. Select a node, then Focus, Branch or First-degree for readable detail.';$('#graph').parentElement.appendChild(badge)}badge.hidden=radial||!overview||!state.nodes.size;
 }
 function applySearch(){const q=$('#searchInput').value.trim().toLowerCase();if(!q){$$('.node,.edge').forEach(x=>x.classList.remove('dim'));return}const hit=new Set([...state.nodes.values()].filter(n=>[n.title,n.type,n.itemId,n.url].some(v=>String(v||'').toLowerCase().includes(q))).map(n=>n.id));$$('.node').forEach(x=>x.classList.toggle('dim',!hit.has(x.dataset.id)));$$('.edge').forEach(x=>{const e=state.edges.get(x.dataset.id);x.classList.toggle('dim',!(hit.has(e.source)||hit.has(e.target)))})}
 function fitGraph({force=true}={}){
  const r=graphViewport();if(r.width<=1||r.height<=1)return;
  if(Math.abs(r.width-graphSize.width)>1||Math.abs(r.height-graphSize.height)>1){graphLayoutKey='';render()}
  if(!graphGeometry?.positions.size)return;
- const b=graphGeometry.bounds,pad=22;let width=b.width,height=b.height,cx=(b.left+b.right)/2,cy=(b.top+b.bottom)/2;
- if(graphView()==='first'&&graphLayouts.first!=='dependency'&&graphGeometry.positions.has(state.isolated)){const root=graphGeometry.positions.get(state.isolated);cx=root.x;cy=root.y;width=2*Math.max(Math.abs(b.left-cx),Math.abs(b.right-cx));height=2*Math.max(Math.abs(b.top-cy),Math.abs(b.bottom-cy))}
- const k=Math.max(.00001,Math.min(1.15,(r.width-pad*2)/Math.max(1,width),(r.height-pad*2)/Math.max(1,height)));graphCamera({k,x:r.width/2-cx*k,y:r.height/2-cy*k});
+ const camera=graphLayoutVersion==='v1'
+   ?graphEngine().fit(graphGeometry,r.width,r.height,{ego:graphView()==='first',root:state.isolated})
+   :graphEngine().fit(graphGeometry,r.width,r.height);
+ graphCamera(camera);
 }
 function maybeFitGraph(){if(graphPreferences.autoFit)fitGraph({force:false})}
 function focusSelection(){const n=state.nodes.get(state.selected),r=graphViewport();if(!n||!filteredSets().has(n.id)||r.width<=1||r.height<=1)return;const k=Math.max(1,state.transform.k);graphCamera({k,x:r.width/2-n.x*k,y:r.height/2-n.y*k})}
@@ -252,10 +304,11 @@ function isolateFirstDegree(){setGraphView('first')}
 function selectNode(id,{activateGraph=false}={}){if(!state.nodes.has(id))return;if(activateGraph)graphAppearance.clicked=id;else if(id!==state.selected)graphAppearance.clicked=null;const follow=graphView()==='first';state.selected=id;if(follow)state.isolated=id;render();renderDetails();syncSelection();renderContent();renderSchema();renderMetadata();if(follow)maybeFitGraph()}
 function initGraphControls(){
  ensureGraphPreferencesUI();
+ $$('[data-graph-version]').forEach(button=>button.onclick=()=>setGraphLayoutVersion(button.dataset.graphVersion));
  $('#graphCardsBtn').onclick=()=>{graphAppearance.cards=!graphAppearance.cards;graphAppearanceControls()};
  $('#graphClickHighlightsBtn').onclick=()=>{graphAppearance.clickOnly=!graphAppearance.clickOnly;graphAppearanceControls()};
- $('#graphAutoFitBtn')?.addEventListener('click',()=>{graphPreferences.autoFit=!graphPreferences.autoFit;graphControls();if(graphPreferences.autoFit)fitGraph()});
- $$('[data-graph-density]').forEach(button=>button.addEventListener('click',()=>{graphPreferences.density=button.dataset.graphDensity;layoutGraph();render();maybeFitGraph()}));
+ $('#graphAutoFitBtn')?.addEventListener('click',()=>setGraphAutoFit(!graphPreferences.autoFit));
+ $$('[data-graph-density]').forEach(button=>button.addEventListener('click',()=>setGraphDensity(button.dataset.graphDensity)));
  const highlight=id=>{for(const entry of graphEdgeDOM)entry.element.classList.toggle('graph-edge-hover',!graphAppearance.clickOnly&&!!id&&(entry.edge.source===id||entry.edge.target===id))};
  $('#nodes').addEventListener('pointerover',event=>highlight(event.target.closest?.('.node')?.dataset.id));
  $('#nodes').addEventListener('pointerout',event=>{if(!event.relatedTarget?.closest?.('.node'))highlight(null)});
@@ -270,7 +323,7 @@ function initGraphControls(){
  viewport.addEventListener('keydown',event=>{const target=event.target.closest?.('.node');if(target&&(event.key==='Enter'||event.key===' ')){event.preventDefault();selectNode(target.dataset.id,{activateGraph:true});graphNodeDOM.get(target.dataset.id)?.focus({preventScroll:true})}});
  window.addEventListener('pagehide',()=>{graphCancel();if(graphResizeFrame)cancelAnimationFrame(graphResizeFrame);observer.disconnect()});
  window.addEventListener('pageshow',event=>{if(event.persisted){observer.observe(viewport);observer.observe(toolbar);queueResize()}});
- window.UOSGraph={stats:()=>({view:graphView(),layout:graphLayouts[graphView()],preferences:{...graphLayouts,autoFit:graphPreferences.autoFit,density:graphPreferences.density},appearance:{...graphAppearance},nodes:graphNodeDOM.size,edges:graphEdgeDOM.length,transform:{...state.transform},viewport:graphViewport(),overview:state.transform.k<13/14,animating:!!graphAnimation}),fit:()=>fitGraph({force:true}),view:setGraphView};
+ window.UOSGraph={stats:()=>({layoutVersion:graphLayoutVersion,view:graphView(),layout:graphLayouts[graphView()],preferences:{...graphLayouts,autoFit:graphPreferences.autoFit,density:graphPreferences.density,spacing:graphPreferences.spacing},appearance:{...graphAppearance},nodes:graphNodeDOM.size,edges:graphEdgeDOM.length,transform:{...state.transform},viewport:graphViewport(),overview:state.transform.k<13/14,animating:!!graphAnimation}),fit:()=>fitGraph({force:true}),view:setGraphView};
  graphControls();
 }
 
@@ -487,12 +540,12 @@ function applyPalette(value,persist=true){const key=Object.hasOwn(PALETTE_NAMES,
 function initPalette(){let key='original';try{key=localStorage.getItem('arcgis-explorer-palette')||key}catch{}applyPalette(key,false);$('#paletteSelect').onchange=e=>applyPalette(e.target.value)}
 
 // Interaction
-$('#signinBtn').onclick=beginSignin;$('#exchangeBtn').onclick=exchangeCode;$('#verifyBtn').onclick=verifyToken;$('#logoutBtn').onclick=clearToken;$('#scanBtn').onclick=buildGraph;$('#clearBtn').onclick=resetGraph;$('#layoutBtn').onclick=()=>{layoutGraph();render();maybeFitGraph()};$('#fitBtn').onclick=()=>fitGraph({force:true});$('#jsonBtn').onclick=exportJSON;$('#csvBtn').onclick=exportCSV;$('#focusBtn').onclick=focusSelection;$('#descBtn').onclick=()=>setGraphView('branch');$('#firstDegreeBtn').onclick=isolateFirstDegree;$('#showAllBtn').onclick=()=>setGraphView('all');$('#searchInput').oninput=applySearch;$('#spacingInput').oninput=()=>{layoutGraph();render();maybeFitGraph()};$$('input[data-kind]').forEach(x=>x.onchange=()=>{render();maybeFitGraph()});$('#zoomInBtn').onclick=()=>{const r=$('#graph').getBoundingClientRect();zoomAt(1.2,r.width/2,r.height/2)};$('#zoomOutBtn').onclick=()=>{const r=$('#graph').getBoundingClientRect();zoomAt(1/1.2,r.width/2,r.height/2)};
+$('#signinBtn').onclick=beginSignin;$('#exchangeBtn').onclick=exchangeCode;$('#verifyBtn').onclick=verifyToken;$('#logoutBtn').onclick=clearToken;$('#scanBtn').onclick=buildGraph;$('#clearBtn').onclick=resetGraph;$('#layoutBtn').onclick=()=>{layoutGraph();render();maybeFitGraph()};$('#fitBtn').onclick=()=>fitGraph({force:true});$('#jsonBtn').onclick=exportJSON;$('#csvBtn').onclick=exportCSV;$('#focusBtn').onclick=focusSelection;$('#descBtn').onclick=()=>setGraphView('branch');$('#firstDegreeBtn').onclick=isolateFirstDegree;$('#showAllBtn').onclick=()=>setGraphView('all');$('#searchInput').oninput=applySearch;$('#spacingInput').oninput=event=>setGraphSpacing(event.target.value);$$('input[data-kind]').forEach(x=>x.onchange=()=>{render();maybeFitGraph()});$('#zoomInBtn').onclick=()=>{const r=$('#graph').getBoundingClientRect();zoomAt(1.2,r.width/2,r.height/2)};$('#zoomOutBtn').onclick=()=>{const r=$('#graph').getBoundingClientRect();zoomAt(1/1.2,r.width/2,r.height/2)};
 $('#demoPasteBtn').onclick=async()=>{try{$('#itemInput').value=await navigator.clipboard.readText()}catch{setScanStatus('Clipboard access was unavailable. Paste into the field manually.','warn')}};
 
 const svg=$('#graph');svg.addEventListener('wheel',e=>{e.preventDefault();const r=svg.getBoundingClientRect();zoomAt(e.deltaY<0?1.12:1/1.12,e.clientX-r.left,e.clientY-r.top)},{passive:false});
 svg.addEventListener('pointerdown',e=>{const g=e.target.closest?.('.node');if(g){const n=state.nodes.get(g.dataset.id);graphCancel(true);state.dragging={id:n.id,px:e.clientX,py:e.clientY,ox:n.x,oy:n.y};selectNode(n.id,{activateGraph:true});svg.setPointerCapture(e.pointerId);e.preventDefault();return}graphAppearance.clicked=null;graphAppearanceControls();state.panning={px:e.clientX,py:e.clientY,ox:state.transform.x,oy:state.transform.y};svg.setPointerCapture(e.pointerId)});
-svg.addEventListener('pointermove',e=>{if(state.dragging){const d=state.dragging,n=state.nodes.get(d.id);n.x=d.ox+(e.clientX-d.px)/state.transform.k;n.y=d.oy+(e.clientY-d.py)/state.transform.k;graphCurrent.set(n.id,{x:n.x,y:n.y});graphGeometry.positions.set(n.id,{x:n.x,y:n.y});graphGeometry.bounds=UOSGraphLayout.bounds(graphGeometry.positions,graphGeometry.metrics);graphNodeDOM.get(n.id)?.setAttribute('transform',`translate(${n.x},${n.y})`);for(const entry of graphEdgeDOM)if(entry.edge.source===n.id||entry.edge.target===n.id)entry.element.setAttribute('d',graphPath(entry.edge));return}if(state.panning){state.transform.x=state.panning.ox+(e.clientX-state.panning.px);state.transform.y=state.panning.oy+(e.clientY-state.panning.py);applyTransform()}});svg.addEventListener('pointerup',()=>{state.dragging=null;state.panning=null});svg.addEventListener('pointercancel',()=>{state.dragging=null;state.panning=null});
+svg.addEventListener('pointermove',e=>{if(state.dragging){const d=state.dragging,n=state.nodes.get(d.id);n.x=d.ox+(e.clientX-d.px)/state.transform.k;n.y=d.oy+(e.clientY-d.py)/state.transform.k;graphCurrent.set(n.id,{x:n.x,y:n.y});graphGeometry.positions.set(n.id,{x:n.x,y:n.y});graphGeometry.bounds=UOSGraphLayout.bounds(graphGeometry.positions,graphGeometry.metrics);graphPaint();return}if(state.panning){state.transform.x=state.panning.ox+(e.clientX-state.panning.px);state.transform.y=state.panning.oy+(e.clientY-state.panning.py);applyTransform()}});svg.addEventListener('pointerup',()=>{state.dragging=null;state.panning=null});svg.addEventListener('pointercancel',()=>{state.dragging=null;state.panning=null});
 initGraphControls();
 initIntegrated();
 render();

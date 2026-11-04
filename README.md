@@ -28,6 +28,12 @@ Default globe spin is 0.5 rad/s and map detail is 32,000 samples. Location marke
 
 See docs/SID_JUKEBOX.md for track provenance, subtune selection, emulator licensing and playback tests. Tracks retain their original authorship; they are not presented as royalty-free music.
 
+## Graph layout and presentation
+
+Graph map starts in **V1**, restoring the original Dependency, Balanced, and Radial layouts, curved connectors, Roomy/Balanced/Compact density presets, spacing slider, and fitting up to 2.4×. Choose **V2** for native-size labels/symbols, relationship-based radial sectors, Roomy/Normal/Compact density presets, and rounded connectors that reserve label space even with cards off. Large V2 overviews prioritize endpoint clearance.
+
+Both versions retain all graph controls. Layout choices for each graph view, density, spacing, and auto-fit settings are remembered separately for V1 and V2 during the current session; every fresh page starts in V1. Switching preserves the loaded graph, selection, filters, appearance settings, and colour fixes. It fits automatically when the destination version has auto-fit enabled; otherwise it preserves the current camera. Manual Fit always remains available. Ordinary ArcGIS services that advertise metadata support retain the Service colour; actual System/basemap and Metadata resources use their dedicated legend colours.
+
 ## Accessible tips
 The launcher and both explorers share custom tips instead of native browser hover titles. Tips clear the pointer by 40 CSS pixels in each direction, flip and clamp inside the viewport, support keyboard focus and Escape, and disappear on pointer exit, blur, scrolling, page departure or removal of the control.
 

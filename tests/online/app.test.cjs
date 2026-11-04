@@ -11,11 +11,15 @@ class Element {
 const shell=html.replace(/<script[^>]*>[\s\S]*?<\/script>/gi,'').replace(/<style[^>]*>[\s\S]*?<\/style>/gi,''),elements=new Map(),tags=[];for(const m of shell.matchAll(/<([\w-]+)\b([^>]*)>/g)){const el=new Element(m[1]);for(const a of m[2].matchAll(/([\w-]+)(?:="([^"]*)")?/g)){if(a[1]==='id'){el.id=a[2];assert(!elements.has(el.id),'Duplicate ID '+el.id);elements.set(el.id,el)}if(a[1]==='value')el.value=a[2];if(a[1]==='checked')el.checked=true;if(a[1]==='selected')el.selected=true;if(a[1].startsWith('data-'))el.dataset[a[1].slice(5).replace(/-([a-z])/g,(_,c)=>c.toUpperCase())]=a[2];}tags.push(el)}
 elements.get('pageSize').value='250';elements.get('fallbackBasemap').value='aerial';elements.get('contentSort').value='name';
 const doc={events:{},addEventListener(type,handler){this.events[type]=handler},documentElement:{dataset:{theme:'light'}},body:new Element(),createElement:t=>new Element(t),createElementNS:(_,t)=>new Element(t),querySelector(s){if(s.startsWith('#'))return elements.get(s.slice(1))||null;return this.querySelectorAll(s)[0]||null},querySelectorAll(s){if(s.startsWith('#'))return [elements.get(s.slice(1))].filter(Boolean);if(s==='input[data-kind]')return tags.filter(t=>t.tagName==='input'&&t.dataset.kind);const attr=s.match(/^\[data-([\w-]+)(?:="([^"]+)")?\]$/);if(attr){const key=attr[1].replace(/-([a-z])/g,(_,c)=>c.toUpperCase());return tags.filter(t=>t.dataset[key]!==undefined&&(!attr[2]||t.dataset[key]===attr[2]))}return []}};
-const storage=new Map();const sandbox={document:doc,console,URL,URLSearchParams,Blob,AbortController,TextEncoder,Uint8Array,Map,Set,WeakSet,Date,Math,JSON,structuredClone,setTimeout,clearTimeout,requestAnimationFrame:f=>{f(100000);return 1},cancelAnimationFrame(){},performance:{now:()=>0},matchMedia:()=>({matches:true}),ResizeObserver:class{observe(){}disconnect(){}},localStorage:{getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v),removeItem:k=>storage.delete(k)},navigator:{clipboard:{readText:async()=>''}},crypto:require('node:crypto').webcrypto,btoa:s=>Buffer.from(s,'binary').toString('base64'),fetch:async()=>{throw new Error('Unexpected network request')},window:{addEventListener(){}},};sandbox.window=sandbox; sandbox.addEventListener=()=>{};vm.createContext(sandbox);vm.runInContext(fs.readFileSync(path.join(__dirname,'../../online/js/graph-layout.js'),'utf8'),sandbox);
-let code=appCode.replace('initIntegrated();\nrender();','window.TEST={state,ui,loadDemo,renderContent,renderSchema,depthMap,addNode,addEdge,resetGraph,scanItem,scanServiceOnce,loadFeatures,featurePage,featureCollection,ringsGeometry,restJSON,exportWorkspace,importWorkspace,selectNode,setBasemap,installBasemap,removeMetro,applyMetro,buildGraph,clearSpatial,initMap,metadataURLs,loadXML,verifyToken,exchangeCode,portalSearch,portalNext,portalPrevious,portalSearchContext,loadPortalResult,resourceVisible,explicitResourceRoles,clearToken,applyExpansionLevel,hierarchyMaxLevel,showFeature,zoomSelectedFeature,clearFeatureSelection,setPanelFullscreen,installFeatureSelectionLayers,firstDegreeNodes,connectionClass,visibleGraphEdges,filteredSets,isolateFirstDegree,applyPalette,initPalette};initIntegrated();\nrender();');vm.runInContext(code,sandbox);const t=sandbox.TEST;
+const storage=new Map();const sandbox={document:doc,console,URL,URLSearchParams,Blob,AbortController,TextEncoder,Uint8Array,Map,Set,WeakSet,Date,Math,JSON,structuredClone,setTimeout,clearTimeout,requestAnimationFrame:f=>{f(100000);return 1},cancelAnimationFrame(){},performance:{now:()=>0},matchMedia:()=>({matches:true}),ResizeObserver:class{observe(){}disconnect(){}},localStorage:{getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v),removeItem:k=>storage.delete(k)},navigator:{clipboard:{readText:async()=>''}},crypto:require('node:crypto').webcrypto,btoa:s=>Buffer.from(s,'binary').toString('base64'),fetch:async()=>{throw new Error('Unexpected network request')},window:{addEventListener(){}},};sandbox.window=sandbox; sandbox.addEventListener=()=>{};vm.createContext(sandbox);vm.runInContext(fs.readFileSync(path.join(__dirname,'../../online/js/graph-layout-v1.js'),'utf8'),sandbox);vm.runInContext(fs.readFileSync(path.join(__dirname,'../../online/js/graph-layout.js'),'utf8'),sandbox);vm.runInContext(fs.readFileSync(path.join(__dirname,'../../online/js/graph-routing.js'),'utf8'),sandbox);
+let code=appCode.replace('initIntegrated();\nrender();','window.TEST={state,ui,loadDemo,renderContent,renderSchema,depthMap,addNode,addEdge,resetGraph,scanItem,scanServiceOnce,loadFeatures,featurePage,featureCollection,ringsGeometry,restJSON,exportWorkspace,importWorkspace,selectNode,setBasemap,installBasemap,removeMetro,applyMetro,buildGraph,clearSpatial,initMap,metadataURLs,loadXML,verifyToken,exchangeCode,portalSearch,portalNext,portalPrevious,portalSearchContext,loadPortalResult,resourceVisible,explicitResourceRoles,clearToken,applyExpansionLevel,hierarchyMaxLevel,showFeature,zoomSelectedFeature,clearFeatureSelection,setPanelFullscreen,installFeatureSelectionLayers,firstDegreeNodes,connectionClass,visibleGraphEdges,filteredSets,isolateFirstDegree,applyPalette,initPalette,setGraphLayoutVersion,setGraphDensity,setGraphSpacing,setGraphAutoFit};initIntegrated();\nrender();');vm.runInContext(code,sandbox);const t=sandbox.TEST;
 let count=0;function test(name,f){try{const result=f();if(result?.then)return result.then(()=>{count++;console.log('PASS',name)});count++;console.log('PASS',name)}catch(e){console.error('FAIL',name);throw e}}
 function el(id){return elements.get(id)}
 (async()=>{
+ test('Graph layout version starts in V1 with independent default settings',()=>{
+  const graph=sandbox.UOSGraph.stats();assert.equal(graph.layoutVersion,'v1');assert.equal(graph.preferences.density,'balanced');assert.equal(graph.preferences.spacing,135);assert.equal(graph.preferences.autoFit,true);
+  assert.equal(el('graphV1Btn').getAttribute('aria-pressed'),'true');assert.equal(el('graphV2Btn').getAttribute('aria-pressed'),'false');assert.equal(el('graph').dataset.layoutVersion,'v1');
+ });
  test('App initializes in Connect with all DOM controls and six views',()=>{assert.equal(tags.filter(t=>t.dataset.view).length,6);assert.equal(t.ui.view,'connect');assert(!elements.has('connectionDialog'));assert.match(el('contentFooter').textContent,/0 resource/)});
  test('Demo populates shared selection, live table and schema',()=>{t.loadDemo();assert.equal(t.state.nodes.size,7);assert.equal(t.state.selected,'demo:trees');assert.match(el('contentBody').innerHTML,/Street trees/);assert.match(el('schemaBody').innerHTML,/CONDITION/);assert.match(el('workspaceMode').textContent,/Demo/)});
  test('Level 1 hides descendants instead of rendering new root rows',()=>{t.applyExpansionLevel(1);assert.match(el('contentBody').innerHTML,/City Planning Dashboard/);assert(!el('contentBody').innerHTML.includes('Street trees'));});
@@ -123,6 +127,42 @@ function el(id){return elements.get(id)}
   await t.importWorkspace({size:300,text:async()=>JSON.stringify(imported)});assert.equal(t.resourceVisible(t.state.nodes.get('legacy'),{surface:'content'}),true);assert(t.state.nodes.get('base-role').roles.includes('basemap'));assert.equal(t.resourceVisible(t.state.nodes.get('base-role'),{surface:'content'}),false);
  });
 
+ test('Graph versions remember their own layout, density, spacing and auto-fit settings',()=>{
+  t.loadDemo();el('showAllBtn').click();t.selectNode('demo:map');
+  t.setGraphDensity('roomy');t.setGraphSpacing(190);t.setGraphAutoFit(false);
+  tags.find(button=>button.dataset.graphLayout==='radial').click();
+  el('graphV2Btn').click();let graph=sandbox.UOSGraph.stats();
+  assert.equal(graph.layoutVersion,'v2');assert.equal(graph.layout,'dependency');assert.equal(graph.preferences.density,'balanced');assert.equal(graph.preferences.spacing,135);assert.equal(graph.preferences.autoFit,true);
+  t.setGraphDensity('compact');t.setGraphSpacing(95);t.setGraphAutoFit(false);tags.find(button=>button.dataset.graphLayout==='balanced').click();
+  el('zoomInBtn').click();const camera={...t.state.transform};el('graphV1Btn').click();graph=sandbox.UOSGraph.stats();
+  assert.equal(graph.layoutVersion,'v1');assert.equal(graph.layout,'radial');assert.equal(graph.preferences.density,'roomy');assert.equal(graph.preferences.spacing,190);assert.equal(Number(el('spacingInput').value),190);assert.equal(graph.preferences.autoFit,false);
+  assert.deepEqual({...t.state.transform},camera,'destination with auto-fit suppressed preserves the camera');
+  el('graphV2Btn').click();graph=sandbox.UOSGraph.stats();assert.equal(graph.layout,'balanced');assert.equal(graph.preferences.density,'compact');assert.equal(graph.preferences.spacing,95);assert.equal(graph.preferences.autoFit,false);assert.equal(t.state.selected,'demo:map');
+  const before={...t.state.transform};el('fitBtn').click();assert.notDeepEqual({...t.state.transform},before,'manual Fit operates with auto-fit suppressed');assert(Object.values(t.state.transform).every(Number.isFinite));
+ });
+ test('All three layouts and density presets dispatch to the selected graph engine',()=>{
+  const nodeIds=[...t.state.nodes.keys()],edgeIds=[...t.state.edges.keys()],selected=t.state.selected;
+  let requests=0;sandbox.fetch=async()=>{requests++;throw Error('Version switching must not reload content')};
+  for(const version of ['v1','v2']){
+   t.setGraphLayoutVersion(version);t.setGraphAutoFit(true);
+   for(const layout of ['dependency','balanced','radial'])for(const density of ['roomy','balanced','compact']){
+    tags.find(button=>button.dataset.graphLayout===layout).click();t.setGraphDensity(density);el('spacingInput').value=160;el('spacingInput').oninput({target:el('spacingInput')});
+    const graph=sandbox.UOSGraph.stats();assert.equal(graph.layoutVersion,version);assert.equal(graph.layout,layout);assert.equal(graph.preferences.density,density);assert.equal(graph.preferences.spacing,160);
+    const paths=el('edges').children.map(edge=>edge.getAttribute('d'));assert(paths.length>0);assert(paths.every(d=>d&&d.includes(version==='v1'?' C':' L')),'connectors use the selected engine');
+    if(version==='v2')assert(graph.transform.k<=1.001,'V2 still fits at native size');
+   }
+  }
+  assert.deepEqual([...t.state.nodes.keys()],nodeIds);assert.deepEqual([...t.state.edges.keys()],edgeIds);assert.equal(t.state.selected,selected);assert.equal(requests,0);
+ });
+ test('Appearance, filters and first-degree selection survive version switches',()=>{
+  el('graphCardsBtn').click();el('graphClickHighlightsBtn').click();
+  const filter=tags.find(input=>input.dataset.kind==='table');filter.checked=false;filter.onchange();
+  t.selectNode('demo:map');t.isolateFirstDegree();const before=sandbox.UOSGraph.stats();
+  for(const version of ['v1','v2','v1']){
+   t.setGraphLayoutVersion(version);const graph=sandbox.UOSGraph.stats();assert.equal(graph.view,'first');assert.equal(graph.nodes,before.nodes);assert.equal(graph.edges,before.edges);assert.deepEqual(graph.appearance,before.appearance);assert.equal(filter.checked,false);assert.equal(t.state.selected,'demo:map');
+  }
+  const active=sandbox.UOSGraph.stats();t.setGraphLayoutVersion('invalid');assert.deepEqual(sandbox.UOSGraph.stats(),active,'invalid versions do not change state');
+ });
  clearTimeout(t.ui.statusTimer);
  console.log(`${count} checks passed.`);
 })().catch(e=>{console.error(e);process.exitCode=1});
