@@ -7,6 +7,7 @@ const $ = s => document.querySelector(s); const $$ = s => [...document.querySele
 const state = { token:'', tokenKind:'', tokenPortalOrigin:'', identity:null, pkce:null, nodes:new Map(), edges:new Map(), selected:null, isolated:null,isolationMode:'branch', transform:{x:0,y:0,k:1}, dragging:null, panning:null };
 let authEpoch=0,searchEpoch=0;
 const KIND_COLORS = {experience:'var(--graph-experience)',webmap:'var(--graph-webmap)',webscene:'var(--graph-webscene)',service:'var(--graph-service)',layer:'var(--graph-layer)',table:'var(--graph-table)',other:'var(--graph-other)'};
+const ROLE_COLORS = {system:'var(--graph-system)',metadata:'var(--graph-metadata)'};
 const esc = s => String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 function log(msg){ const el=$('#log'); const t=new Date().toLocaleTimeString(); el.textContent += `\n[${t}] ${msg}`; el.scrollTop=el.scrollHeight; }
 function setAuthStatus(msg,kind=''){ const e=$('#authStatus'); e.textContent=msg;e.className='status'+(kind?' '+kind:''); }
@@ -148,6 +149,9 @@ function resetGraph(){state.nodes.clear();state.edges.clear();state.selected=nul
 function visibleKind(kind){const cb=$(`input[data-kind="${kind}"]`);return cb?cb.checked:true}
 const graphLayouts={all:'dependency',branch:'dependency',first:'balanced'};
 const graphAppearance={cards:false,clickOnly:true,clicked:null};
+const graphPreferences={autoFit:true,density:'balanced'};
+const graphDensity={roomy:{spacing:170,scale:1.08},balanced:{spacing:135,scale:1},compact:{spacing:100,scale:.88}};
+function graphNodeColor(node){const roles=normalizeResourceRoles(node?.roles);if(roles.includes('system'))return ROLE_COLORS.system;if(roles.includes('metadata'))return ROLE_COLORS.metadata;return KIND_COLORS[node?.kind]||KIND_COLORS.other}
 function graphAppearanceControls(){
  const svg=$('#graph');svg.classList.toggle('graph-cards-off',!graphAppearance.cards);svg.classList.toggle('graph-click-highlights',graphAppearance.clickOnly);
  $('#graphCardsBtn').setAttribute('aria-pressed',String(graphAppearance.cards));$('#graphClickHighlightsBtn').setAttribute('aria-pressed',String(graphAppearance.clickOnly));
@@ -170,10 +174,11 @@ function layoutGraph(){graphLayoutKey='';graphCalculate()}
 function graphCalculate(){
  const box=graphViewport();if(box.width>1&&box.height>1)graphSize=box;
  const allowed=filteredSets(),nodes=[...state.nodes.values()].filter(n=>allowed.has(n.id)),edges=visibleGraphEdges(allowed),view=graphView(),layout=graphLayouts[view];
- const key=[view,layout,state.isolated,state.selected,Math.round(graphSize.width),Math.round(graphSize.height),$('#spacingInput')?.value,...nodes.map(n=>n.id+'|'+n.title+'|'+n.type),...edges.map(e=>e.id||e.source+'>'+e.target)].join('\n');
+ const density=graphDensity[graphPreferences.density]||graphDensity.balanced;
+ const key=[view,layout,state.isolated,state.selected,Math.round(graphSize.width),Math.round(graphSize.height),density.spacing,...nodes.map(n=>n.id+'|'+n.title+'|'+n.type),...edges.map(e=>e.id||e.source+'>'+e.target)].join('\n');
  if(graphGeometry&&key===graphLayoutKey)return false;
  graphLayoutKey=key;
- graphGeometry=UOSGraphLayout.compute(nodes,edges,{...graphSize,layout,ego:view==='first',root:state.isolated,selected:state.selected,measure:graphMeasure,spacing:Number($('#spacingInput')?.value)||135});
+ graphGeometry=UOSGraphLayout.compute(nodes,edges,{...graphSize,layout,ego:view==='first',root:state.isolated,selected:state.selected,measure:graphMeasure,spacing:density.spacing,density:graphPreferences.density,densityScale:density.scale});
  for(const [id,p] of graphGeometry.positions){const n=state.nodes.get(id);n.x=p.x;n.y=p.y}
  return true;
 }
@@ -196,7 +201,8 @@ function graphAnimate(to,camera=null){
  graphFrame=requestAnimationFrame(tick);
 }
 function graphCamera(next){graphAnimate(graphGeometry?.positions||new Map(),next)}
-function graphControls(){const view=graphView(),layout=graphLayouts[view];$$('[data-graph-view]').forEach(button=>{button.setAttribute('aria-pressed',String(button.dataset.graphView===view));button.disabled=button.dataset.graphView!=='all'&&!state.selected});$$('[data-graph-layout]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.graphLayout===layout)));const first=$('#firstDegreeBtn');if(first)first.setAttribute('aria-pressed',String(view==='first'))}
+function graphControls(){const view=graphView(),layout=graphLayouts[view];$$('[data-graph-view]').forEach(button=>{button.setAttribute('aria-pressed',String(button.dataset.graphView===view));button.disabled=button.dataset.graphView!=='all'&&!state.selected});$$('[data-graph-layout]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.graphLayout===layout)));$$('[data-graph-density]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.graphDensity===graphPreferences.density)));const fit=$('#graphAutoFitBtn');if(fit)fit.setAttribute('aria-pressed',String(graphPreferences.autoFit));const first=$('#firstDegreeBtn');if(first)first.setAttribute('aria-pressed',String(view==='first'))}
+function ensureGraphPreferencesUI(){const toolbar=$('.graph-toolbar');if(!toolbar||$('#graphDensityControl'))return;const group=document.createElement('div');group.id='graphDensityControl';group.className='graph-segmented';group.setAttribute('role','group');group.setAttribute('aria-label','Graph compactness');for(const [key,label,tip] of [['roomy','Roomy','Give nodes more breathing room'],['balanced','Balanced','Use balanced spacing'],['compact','Compact','Fit more nodes into the viewport']]){const button=document.createElement('button');button.type='button';button.dataset.graphDensity=key;button.dataset.tooltip=tip;button.textContent=label;button.setAttribute('aria-pressed',String(graphPreferences.density===key));group.appendChild(button)}const auto=document.createElement('button');auto.id='graphAutoFitBtn';auto.type='button';auto.dataset.tooltip='Fit automatically after graph changes';auto.textContent='Auto-fit';auto.setAttribute('aria-pressed',String(graphPreferences.autoFit));toolbar.insertBefore(group,$('#graphFitBtn'));toolbar.insertBefore(auto,$('#graphFitBtn'))}
 function graphSelectionNotice(allowed){
  let notice=$('#graphHiddenSelection');if(!notice){notice=document.createElement('p');notice.id='graphHiddenSelection';notice.className='graph-hidden-selection';notice.setAttribute('role','status');$('#details').before(notice)}
  const hidden=state.selected&&!allowed.has(state.selected);notice.hidden=!hidden;notice.textContent=hidden?'The selected resource is hidden by graph filters. Its details remain available.':'';
@@ -216,7 +222,7 @@ function render(){
   if(!allowed.has(n.id))continue;const m=graphGeometry.metrics.get(n.id);if(!m)continue;
   const g=document.createElementNS(svgNS,'g');g.classList.add('node');if(n.id===state.selected)g.classList.add('selected');g.dataset.id=n.id;g.dataset.tooltip=n.title+' · '+(n.type||n.kind);g.setAttribute('role','button');g.setAttribute('tabindex','0');g.setAttribute('aria-label',g.dataset.tooltip);g.setAttribute('aria-pressed',String(n.id===state.selected));
   const hit=document.createElementNS(svgNS,'rect');hit.classList.add('graph-node-hit');hit.setAttribute('x',-m.w/2);hit.setAttribute('y',-m.h/2);hit.setAttribute('width',m.w);hit.setAttribute('height',m.h);hit.setAttribute('rx','6');g.appendChild(hit);
-  const circle=document.createElementNS(svgNS,'circle');circle.setAttribute('cx',m.iconX);circle.setAttribute('r',m.r);circle.setAttribute('fill',KIND_COLORS[n.kind]||KIND_COLORS.other);g.appendChild(circle);
+  const circle=document.createElementNS(svgNS,'circle');circle.setAttribute('cx',m.iconX);circle.setAttribute('r',m.r);circle.setAttribute('fill',graphNodeColor(n));g.appendChild(circle);
   const text=document.createElementNS(svgNS,'text');text.classList.add('graph-node-label');text.setAttribute('x',m.textX);text.setAttribute('y',-m.h/2+16);m.lines.forEach((line,i)=>{const span=document.createElementNS(svgNS,'tspan');span.setAttribute('x',m.textX);span.setAttribute('dy',i?'17':'0');span.textContent=line;text.appendChild(span)});g.appendChild(text);
   const sub=document.createElementNS(svgNS,'text');sub.classList.add('sub');sub.setAttribute('x',m.textX);sub.setAttribute('y',-m.h/2+16+m.lines.length*17);sub.textContent=m.subtitle;g.appendChild(sub);ns.appendChild(g);graphNodeDOM.set(n.id,g);
  }
@@ -230,7 +236,7 @@ function applyTransform(){
  let badge=$('#graphOverviewNote');if(!badge){badge=document.createElement('span');badge.id='graphOverviewNote';badge.className='graph-overview-note';badge.setAttribute('role','status');badge.textContent='Overview · all visible resources retained. Select a node, then Focus, Branch or First-degree for readable detail.';$('#graph').parentElement.appendChild(badge)}badge.hidden=!overview||!state.nodes.size;
 }
 function applySearch(){const q=$('#searchInput').value.trim().toLowerCase();if(!q){$$('.node,.edge').forEach(x=>x.classList.remove('dim'));return}const hit=new Set([...state.nodes.values()].filter(n=>[n.title,n.type,n.itemId,n.url].some(v=>String(v||'').toLowerCase().includes(q))).map(n=>n.id));$$('.node').forEach(x=>x.classList.toggle('dim',!hit.has(x.dataset.id)));$$('.edge').forEach(x=>{const e=state.edges.get(x.dataset.id);x.classList.toggle('dim',!(hit.has(e.source)||hit.has(e.target)))})}
-function fitGraph(){
+function fitGraph({force=true}={}){
  const r=graphViewport();if(r.width<=1||r.height<=1)return;
  if(Math.abs(r.width-graphSize.width)>1||Math.abs(r.height-graphSize.height)>1){graphLayoutKey='';render()}
  if(!graphGeometry?.positions.size)return;
@@ -238,29 +244,33 @@ function fitGraph(){
  if(graphView()==='first'&&graphLayouts.first!=='dependency'&&graphGeometry.positions.has(state.isolated)){const root=graphGeometry.positions.get(state.isolated);cx=root.x;cy=root.y;width=2*Math.max(Math.abs(b.left-cx),Math.abs(b.right-cx));height=2*Math.max(Math.abs(b.top-cy),Math.abs(b.bottom-cy))}
  const k=Math.max(.00001,Math.min(1.15,(r.width-pad*2)/Math.max(1,width),(r.height-pad*2)/Math.max(1,height)));graphCamera({k,x:r.width/2-cx*k,y:r.height/2-cy*k});
 }
+function maybeFitGraph(){if(graphPreferences.autoFit)fitGraph({force:false})}
 function focusSelection(){const n=state.nodes.get(state.selected),r=graphViewport();if(!n||!filteredSets().has(n.id)||r.width<=1||r.height<=1)return;const k=Math.max(1,state.transform.k);graphCamera({k,x:r.width/2-n.x*k,y:r.height/2-n.y*k})}
 function zoomAt(factor,cx,cy){graphCancel(true);const t=state.transform,nk=Math.max(.00001,Math.min(5,t.k*factor));state.transform={k:nk,x:cx-(cx-t.x)*(nk/t.k),y:cy-(cy-t.y)*(nk/t.k)};applyTransform()}
-function setGraphView(view){if(view!=='all'&&!state.selected)return;state.isolated=view==='all'?null:state.selected;state.isolationMode=view==='first'?'first':'branch';layoutGraph();render();fitGraph()}
+function setGraphView(view){if(view!=='all'&&!state.selected)return;state.isolated=view==='all'?null:state.selected;state.isolationMode=view==='first'?'first':'branch';layoutGraph();render();fitGraph({force:true})}
 function isolateFirstDegree(){setGraphView('first')}
-function selectNode(id,{activateGraph=false}={}){if(!state.nodes.has(id))return;if(activateGraph)graphAppearance.clicked=id;else if(id!==state.selected)graphAppearance.clicked=null;const follow=graphView()==='first';state.selected=id;if(follow)state.isolated=id;render();renderDetails();syncSelection();renderContent();renderSchema();renderMetadata();if(follow)fitGraph()}
+function selectNode(id,{activateGraph=false}={}){if(!state.nodes.has(id))return;if(activateGraph)graphAppearance.clicked=id;else if(id!==state.selected)graphAppearance.clicked=null;const follow=graphView()==='first';state.selected=id;if(follow)state.isolated=id;render();renderDetails();syncSelection();renderContent();renderSchema();renderMetadata();if(follow)maybeFitGraph()}
 function initGraphControls(){
+ ensureGraphPreferencesUI();
  $('#graphCardsBtn').onclick=()=>{graphAppearance.cards=!graphAppearance.cards;graphAppearanceControls()};
  $('#graphClickHighlightsBtn').onclick=()=>{graphAppearance.clickOnly=!graphAppearance.clickOnly;graphAppearanceControls()};
+ $('#graphAutoFitBtn')?.addEventListener('click',()=>{graphPreferences.autoFit=!graphPreferences.autoFit;graphControls();if(graphPreferences.autoFit)fitGraph()});
+ $$('[data-graph-density]').forEach(button=>button.addEventListener('click',()=>{graphPreferences.density=button.dataset.graphDensity;layoutGraph();render();maybeFitGraph()}));
  const highlight=id=>{for(const entry of graphEdgeDOM)entry.element.classList.toggle('graph-edge-hover',!graphAppearance.clickOnly&&!!id&&(entry.edge.source===id||entry.edge.target===id))};
  $('#nodes').addEventListener('pointerover',event=>highlight(event.target.closest?.('.node')?.dataset.id));
  $('#nodes').addEventListener('pointerout',event=>{if(!event.relatedTarget?.closest?.('.node'))highlight(null)});
  $('#nodes').addEventListener('focusin',event=>highlight(event.target.closest?.('.node')?.dataset.id));
  $('#nodes').addEventListener('focusout',()=>highlight(null));
  $$('[data-graph-view]').forEach(button=>button.onclick=()=>setGraphView(button.dataset.graphView));
- $$('[data-graph-layout]').forEach(button=>button.onclick=()=>{graphLayouts[graphView()]=button.dataset.graphLayout;layoutGraph();render();fitGraph()});
- $('#graphFitBtn')?.addEventListener('click',fitGraph);
+ $$('[data-graph-layout]').forEach(button=>button.onclick=()=>{graphLayouts[graphView()]=button.dataset.graphLayout;layoutGraph();render();maybeFitGraph()});
+ $('#graphFitBtn')?.addEventListener('click',()=>fitGraph({force:true}));
  const viewport=$('#graph'),toolbar=$('.graph-toolbar'),workspace=viewport.parentElement;
- const queueResize=()=>{if(graphResizeFrame)return;graphResizeFrame=requestAnimationFrame(()=>{graphResizeFrame=0;const box=graphViewport();if(box.width<=1||box.height<=1)return;graphLayoutKey='';render();fitGraph()})};
+ const queueResize=()=>{if(graphResizeFrame)return;graphResizeFrame=requestAnimationFrame(()=>{graphResizeFrame=0;const box=graphViewport();if(box.width<=1||box.height<=1)return;graphLayoutKey='';render();maybeFitGraph()})};
  const observer=new ResizeObserver(entries=>{for(const entry of entries)if(entry.target===toolbar){workspace.style.setProperty('--graph-toolbar-height',Math.ceil(toolbar.getBoundingClientRect().height)+'px')}queueResize()});observer.observe(viewport);observer.observe(toolbar);
  viewport.addEventListener('keydown',event=>{const target=event.target.closest?.('.node');if(target&&(event.key==='Enter'||event.key===' ')){event.preventDefault();selectNode(target.dataset.id,{activateGraph:true});graphNodeDOM.get(target.dataset.id)?.focus({preventScroll:true})}});
  window.addEventListener('pagehide',()=>{graphCancel();if(graphResizeFrame)cancelAnimationFrame(graphResizeFrame);observer.disconnect()});
  window.addEventListener('pageshow',event=>{if(event.persisted){observer.observe(viewport);observer.observe(toolbar);queueResize()}});
- window.UOSGraph={stats:()=>({view:graphView(),layout:graphLayouts[graphView()],preferences:{...graphLayouts},appearance:{...graphAppearance},nodes:graphNodeDOM.size,edges:graphEdgeDOM.length,transform:{...state.transform},viewport:graphViewport(),overview:state.transform.k<13/14,animating:!!graphAnimation}),fit:fitGraph,view:setGraphView};
+ window.UOSGraph={stats:()=>({view:graphView(),layout:graphLayouts[graphView()],preferences:{...graphLayouts,autoFit:graphPreferences.autoFit,density:graphPreferences.density},appearance:{...graphAppearance},nodes:graphNodeDOM.size,edges:graphEdgeDOM.length,transform:{...state.transform},viewport:graphViewport(),overview:state.transform.k<13/14,animating:!!graphAnimation}),fit:()=>fitGraph({force:true}),view:setGraphView};
  graphControls();
 }
 
@@ -408,10 +418,10 @@ function initIntegrated(){
  $('#portalSearchBtn').onclick=null;$('#portalSearchForm').onsubmit=e=>{e.preventDefault();portalSearch()};$('#portalSearch').oninput=()=>invalidatePortalSearch();$('#searchPrev').onclick=portalPrevious;$('#searchNext').onclick=portalNext;$('#portalResults').onclick=e=>{const b=e.target.closest('[data-search-item]');if(b)loadPortalResult(b.dataset.searchItem)};
  $$('[data-search-scope]').forEach(button=>button.onclick=()=>{if(button.disabled)return;ui.searchScope=button.dataset.searchScope;invalidatePortalSearch();updateConnectControls();portalSearch()});
  $$('[data-search-type]').forEach(button=>button.onclick=()=>{if(button.disabled)return;const type=button.dataset.searchType;if(type==='all')ui.searchTypes.clear();else if(ui.searchTypes.has(type))ui.searchTypes.delete(type);else ui.searchTypes.add(type);invalidatePortalSearch();updateConnectControls();portalSearch()});
- $$('[data-resource-visibility]').forEach(control=>{control.checked=ui.visibility[control.dataset.surface][control.dataset.role];control.onchange=()=>{ui.visibility[control.dataset.surface][control.dataset.role]=control.checked;if(control.dataset.surface==='graph'){render();fitGraph()}else renderContent()}});
+$$('[data-resource-visibility]').forEach(control=>{control.checked=ui.visibility[control.dataset.surface][control.dataset.role];control.onchange=()=>{ui.visibility[control.dataset.surface][control.dataset.role]=control.checked;if(control.dataset.surface==='graph'){render();maybeFitGraph()}else renderContent()}});
  $('#jsonBtn').onclick=exportWorkspace;$('#importBtn').onclick=()=>$('#importFile').click();$('#importFile').onchange=e=>importWorkspace(e.target.files[0]);$('#demoBtn').onclick=$('#welcomeDemo').onclick=loadDemo;
  $('#clearBtn').onclick=()=>{resetGraph();status('Workspace cleared. Imported/exported files are unchanged.')};$('#loadFeaturesBtn').onclick=()=>loadFeatures(true);$('#prevPage').onclick=()=>featurePage(-1);$('#nextPage').onclick=()=>featurePage(1);$('#pageSize').onchange=()=>{if(ui.featureNode){ui.featureOffset=0;loadFeatures(false)}};$('#fitFeaturesBtn').onclick=fitFeatures;$('#zoomSelectedBtn').onclick=zoomSelectedFeature;$('#featureInspector').onclick=handleFeatureInspectorClick;$('#geoJsonBtn').onclick=()=>{if(ui.geo.features.length)download('ArcGIS_Feature_Page.geojson',JSON.stringify(ui.geo,null,2),'application/geo+json')};$('#toggleAttributesBtn').onclick=()=>{const panel=$('#featureInspector');panel.hidden=!panel.hidden;$('#toggleAttributesBtn').setAttribute('aria-expanded',String(!panel.hidden))};$$('[data-basemap]').forEach(b=>b.onclick=()=>{if(b.dataset.basemap==='metro')openMetro();else setBasemap(b.dataset.basemap)});$('#metroApply').onclick=applyMetro;$('#metroRemove').onclick=removeMetro;
- $('#graphLegend').innerHTML=Object.entries(KIND_COLORS).map(([k,color])=>`<span class="legend-item"><span class="legend-symbol" style="background:${color}"></span>${esc(({experience:'Experience',webmap:'Web map',webscene:'Web scene',service:'Service',layer:'Layer',table:'Table',other:'Other'})[k])}</span>`).join('');
+$('#graphLegend').innerHTML=Object.entries(KIND_COLORS).map(([k,color])=>`<span class="legend-item"><span class="legend-symbol" style="background:${color}"></span>${esc(({experience:'Experience',webmap:'Web map',webscene:'Web scene',service:'Service',layer:'Layer',table:'Table',other:'Other'})[k])}</span>`).join('')+Object.entries(ROLE_COLORS).map(([k,color])=>`<span class="legend-item"><span class="legend-symbol" style="background:${color}"></span>${esc(k[0].toUpperCase()+k.slice(1))}</span>`).join('');
  initDataMenu();initPanelFullscreen();initPalette();
  $('#portalInput').onchange=()=>{clearToken();status('Portal changed. Existing resources remain; sign in to the new portal if needed.')};updateConnectControls();refreshIntegrated();
 }
@@ -421,7 +431,7 @@ function initDataMenu(){const menu=$('#dataMenu');const close=()=>{menu.open=fal
 function hierarchyMaxLevel(){const children=adjacency(),incoming=new Set([...state.edges.values()].map(e=>e.target)),covered=new Set();let maximum=1;function visit(id,level,path){if(path.has(id))return;const n=state.nodes.get(id);if(!n)return;covered.add(id);maximum=Math.max(maximum,level+(n.meta?.fields?.length?1:0));const next=new Set([...path,id]);for(const child of children.get(id)||[])visit(child,level+1,next)}for(const n of state.nodes.values())if(!incoming.has(n.id))visit(n.id,1,new Set());for(const n of state.nodes.values())if(!covered.has(n.id))visit(n.id,1,new Set());return maximum}
 function renderExpansionControl(){const maximum=hierarchyMaxLevel();ui.levelLimit=Math.min(maximum,Math.max(1,ui.levelLimit));const mixed=ui.manualExpand.size>0||(ui.filterReveal&&($('#contentSearch').value.trim()||$('#contentType').value));$('#levelSlider').innerHTML=Array.from({length:maximum},(_,i)=>`<button type="button" data-level="${i+1}" class="level-pill ${!mixed&&ui.levelLimit===i+1?'active':''}" aria-pressed="${!!(!mixed&&ui.levelLimit===i+1)}" title="${i===0?'Show top-level resources only':'Expand every branch to level '+(i+1)}">${i+1}</button>`).join('');$('#levelSlider').title=mixed?'Branches are manually expanded or search results are revealed. Choose a level to reset all branches.':'Show hierarchy through level '+ui.levelLimit}
 function applyExpansionLevel(level){ui.levelLimit=Math.min(hierarchyMaxLevel(),Math.max(1,level));ui.manualExpand.clear();ui.filterReveal=false;renderContent();const active=$('#levelSlider').querySelector('[data-level="'+ui.levelLimit+'"]');active?.focus({preventScroll:true})}
-function setPanelFullscreen(enabled){ui.fullscreen=!!enabled;$('#appShell').classList.toggle('panel-fullscreen',ui.fullscreen);for(const button of $$('[data-panel-fullscreen]')){button.setAttribute('aria-pressed',String(ui.fullscreen));button.textContent=ui.fullscreen?'↙ Exit full screen':'⛶ Full screen';button.title=ui.fullscreen?'Restore main header (Esc)':'Hide main header and expand panel'}requestAnimationFrame(()=>{if(ui.mapReady)ui.map.resize();if(ui.view==='dependencies')fitGraph()})}
+function setPanelFullscreen(enabled){ui.fullscreen=!!enabled;$('#appShell').classList.toggle('panel-fullscreen',ui.fullscreen);for(const button of $$('[data-panel-fullscreen]')){button.setAttribute('aria-pressed',String(ui.fullscreen));button.textContent=ui.fullscreen?'↙ Exit full screen':'⛶ Full screen';button.title=ui.fullscreen?'Restore main header (Esc)':'Hide main header and expand panel'}requestAnimationFrame(()=>{if(ui.mapReady)ui.map.resize();if(ui.view==='dependencies')maybeFitGraph()})}
 function initPanelFullscreen(){$$('[data-panel-fullscreen]').forEach(button=>button.onclick=()=>setPanelFullscreen(!ui.fullscreen));document.addEventListener('keydown',e=>{if(e.key==='Escape'&&ui.fullscreen)setPanelFullscreen(false)})}
 
 function emptyGeo(){return {type:'FeatureCollection',features:[]}}
@@ -477,7 +487,7 @@ function applyPalette(value,persist=true){const key=Object.hasOwn(PALETTE_NAMES,
 function initPalette(){let key='original';try{key=localStorage.getItem('arcgis-explorer-palette')||key}catch{}applyPalette(key,false);$('#paletteSelect').onchange=e=>applyPalette(e.target.value)}
 
 // Interaction
-$('#signinBtn').onclick=beginSignin;$('#exchangeBtn').onclick=exchangeCode;$('#verifyBtn').onclick=verifyToken;$('#logoutBtn').onclick=clearToken;$('#scanBtn').onclick=buildGraph;$('#clearBtn').onclick=resetGraph;$('#layoutBtn').onclick=()=>{layoutGraph();render();fitGraph()};$('#fitBtn').onclick=fitGraph;$('#jsonBtn').onclick=exportJSON;$('#csvBtn').onclick=exportCSV;$('#focusBtn').onclick=focusSelection;$('#descBtn').onclick=()=>setGraphView('branch');$('#firstDegreeBtn').onclick=isolateFirstDegree;$('#showAllBtn').onclick=()=>setGraphView('all');$('#searchInput').oninput=applySearch;$('#spacingInput').oninput=()=>{layoutGraph();render();fitGraph()};$$('input[data-kind]').forEach(x=>x.onchange=()=>{render();fitGraph()});$('#zoomInBtn').onclick=()=>{const r=$('#graph').getBoundingClientRect();zoomAt(1.2,r.width/2,r.height/2)};$('#zoomOutBtn').onclick=()=>{const r=$('#graph').getBoundingClientRect();zoomAt(1/1.2,r.width/2,r.height/2)};
+$('#signinBtn').onclick=beginSignin;$('#exchangeBtn').onclick=exchangeCode;$('#verifyBtn').onclick=verifyToken;$('#logoutBtn').onclick=clearToken;$('#scanBtn').onclick=buildGraph;$('#clearBtn').onclick=resetGraph;$('#layoutBtn').onclick=()=>{layoutGraph();render();maybeFitGraph()};$('#fitBtn').onclick=()=>fitGraph({force:true});$('#jsonBtn').onclick=exportJSON;$('#csvBtn').onclick=exportCSV;$('#focusBtn').onclick=focusSelection;$('#descBtn').onclick=()=>setGraphView('branch');$('#firstDegreeBtn').onclick=isolateFirstDegree;$('#showAllBtn').onclick=()=>setGraphView('all');$('#searchInput').oninput=applySearch;$('#spacingInput').oninput=()=>{layoutGraph();render();maybeFitGraph()};$$('input[data-kind]').forEach(x=>x.onchange=()=>{render();maybeFitGraph()});$('#zoomInBtn').onclick=()=>{const r=$('#graph').getBoundingClientRect();zoomAt(1.2,r.width/2,r.height/2)};$('#zoomOutBtn').onclick=()=>{const r=$('#graph').getBoundingClientRect();zoomAt(1/1.2,r.width/2,r.height/2)};
 $('#demoPasteBtn').onclick=async()=>{try{$('#itemInput').value=await navigator.clipboard.readText()}catch{setScanStatus('Clipboard access was unavailable. Paste into the field manually.','warn')}};
 
 const svg=$('#graph');svg.addEventListener('wheel',e=>{e.preventDefault();const r=svg.getBoundingClientRect();zoomAt(e.deltaY<0?1.12:1/1.12,e.clientX-r.left,e.clientY-r.top)},{passive:false});

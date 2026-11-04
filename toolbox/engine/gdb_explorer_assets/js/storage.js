@@ -1,5 +1,5 @@
 /* Bounded, local-only SVG/CSS charts. No record, image, geometry or chart-engine loads. */
-const storageViewState={measure:'source',scope:'all',query:'',page:0};
+const storageViewState={measure:'source',scope:'all',query:'',page:0,reverseSize:false};
 const storagePalette=['#107d77','#5362c7','#bd4f71','#b26a16','#177fb0','#8358b3','#48813b','#ad5142'];
 const storageNumber=value=>typeof value==='number'&&Number.isFinite(value)&&value>=0;
 function storageMeasure(layer,measure){return layer?.[({source:'sourceBytes',export:'exportBytes',zip:'zipBytes'})[measure]]??null}
@@ -11,9 +11,9 @@ function storageGroups(items){
 function storageMosaic(items,x=0,y=0,width=1000,height=370){
   if(!items.length)return [];
   if(items.length===1)return [{...items[0],x,y,width,height}];
-  const sum=items.reduce((n,item)=>n+item.value,0);
-  let index=1,part=items[0].value;
-  while(index<items.length-1&&Math.abs(part+items[index].value-sum/2)<Math.abs(part-sum/2)){part+=items[index++].value}
+  const sum=items.reduce((n,item)=>n+(item.weight??item.value),0);
+  let index=1,part=items[0].weight??items[0].value;
+  while(index<items.length-1&&Math.abs(part+(items[index].weight??items[index].value)-sum/2)<Math.abs(part-sum/2)){part+=items[index].weight??items[index].value;index++}
   const ratio=part/sum;
   return width>=height
     ?[...storageMosaic(items.slice(0,index),x,y,width*ratio,height),...storageMosaic(items.slice(index),x+width*ratio,y,width*(1-ratio),height)]
@@ -40,6 +40,7 @@ function renderStorage(data){
       ${[['source','Source GDB'],['export','App files'],['zip','ZIP payload']].map(([key,label])=>`<button type="button" data-measure="${key}" aria-pressed="${state.measure===key}">${label}</button>`).join('')}
     </div><div class="storageSegment" role="group" aria-label="Storage scope">
       <button type="button" data-scope="all" aria-pressed="${state.scope==='all'}">Whole GDB</button><button type="button" data-scope="group" aria-pressed="${state.scope==='group'}" ${chosen?'':'disabled'}>Selected group</button></div></div>
+    <div class="storageToolbar storageToolbarSecondary"><div class="storageSegment" role="group" aria-label="Shape sizing order"><button type="button" data-reverse-size="true" aria-pressed="${state.reverseSize}">${state.reverseSize?'Normal size tree':'Reverse size tree'}</button></div><span class="storageQuiet">${state.reverseSize?'Small shapes represent larger content sizes.':'Largest content sizes are shown first.'}</span></div>
     <div class="storageStats">
       <div><span>GDB on disk${data.disk?.partial?' · partial':''}</span><strong>${fmt(data.disk?.bytes)}</strong></div>
       <div><span>${totalLabel}</span><strong>${known.length?bytes(total):'Unavailable'}</strong></div>
@@ -53,9 +54,9 @@ function renderStorage(data){
     <p class="storageFootnote">${state.measure==='source'?'ArcGIS-reported dataset sizes; unavailable values stay unknown. Attachment payload is shown separately, not added.':'Export sizes reflect row, geometry and attachment limits. ZIP payload excludes archive headers and shared app files.'} <button type="button" class="storageMethod">About sizes</button></p>
     <div class="storageAbout" hidden>Disk size counts local database files, excluding locks. ArcGIS dataset sizes may use a different storage basis and are not a disk-space reconciliation. Tables and some providers may not expose sizes. Attachment payload counts original file bytes, including attachments omitted by the export size limit. Whole GDB charts cover the feature classes and tables included in this catalogue; other database content remains part of disk size only. No estimates or row-count substitutes are used.</div>`;
   const mosaic=wrap.querySelector('.storageMosaic'),ranking=wrap.querySelector('.storageRanking'),pager=wrap.querySelector('.storagePaging');
-  const sorted=known.map(layer=>({...layer,value:storageMeasure(layer,state.measure)})).sort((a,b)=>b.value-a.value||a.name.localeCompare(b.name));
-  const positive=sorted.filter(layer=>layer.value>0),tiles=positive.slice(0,35);
-  if(positive.length>35)tiles.push({name:`${positive.length-35} more datasets`,value:positive.slice(35).reduce((n,layer)=>n+layer.value,0),group:-1,id:null});
+const sorted=known.map(layer=>({...layer,value:storageMeasure(layer,state.measure)})).sort((a,b)=>(state.reverseSize?a.value-b.value:b.value-a.value)||a.name.localeCompare(b.name));
+const positive=sorted.filter(layer=>layer.value>0),maxValue=Math.max(...positive.map(layer=>layer.value),0),minValue=Math.min(...positive.map(layer=>layer.value),0),tiles=positive.slice(0,35).map(layer=>({...layer,weight:state.reverseSize?maxValue-layer.value+minValue:layer.value}));
+if(positive.length>35){const remainder=positive.slice(35);tiles.push({name:`${positive.length-35} more datasets`,value:remainder.reduce((n,layer)=>n+layer.value,0),weight:remainder.reduce((n,layer)=>n+(state.reverseSize?maxValue-layer.value+minValue:layer.value),0),group:-1,id:null});}
   function drawMosaic(){
     if(signal.aborted)return;
     if(!tiles.length){mosaic.innerHTML=`<div class="storageEmpty">${known.length?'No stored bytes reported.':'Source sizes unavailable. Try App files.'}</div>`;return}
@@ -71,12 +72,13 @@ function renderStorage(data){
   function drawRanking(){
     const query=state.query.trim().toLowerCase();
     const candidates=scope.filter(layer=>!query||layer.name.toLowerCase().includes(query));
-    candidates.sort((a,b)=>(storageMeasure(b,state.measure)??-1)-(storageMeasure(a,state.measure)??-1)||a.name.localeCompare(b.name));
+    candidates.sort((a,b)=>{const av=storageMeasure(a,state.measure)??-1,bv=storageMeasure(b,state.measure)??-1;return (state.reverseSize?av-bv:bv-av)||a.name.localeCompare(b.name)});
     const pages=Math.max(1,Math.ceil(candidates.length/12));state.page=Math.max(0,Math.min(state.page,pages-1));
-    const page=candidates.slice(state.page*12,state.page*12+12),max=sorted[0]?.value||1;
+    const page=candidates.slice(state.page*12,state.page*12+12),max=sorted.reduce((value,layer)=>Math.max(value,storageMeasure(layer,state.measure)||0),0)||1;
     ranking.innerHTML=page.map(layer=>{
       const value=storageMeasure(layer,state.measure),hasSize=storageNumber(value),percent=hasSize&&total>0?(value/total*100).toFixed(1)+'%':'—';
-      return `<button type="button" class="storageRank ${layer.id===selectedId?'selected':''}" data-layer="${esc(layer.id)}" aria-pressed="${layer.id===selectedId}" title="${esc(layer.name)} · ${fmt(value)}"><span class="storageRankName">${esc(layer.name)}</span><strong>${hasSize?bytes(value):'Unknown'}</strong><span class="storageRankTrack"><i style="width:${hasSize?value/max*100:0}%;background:${color(layer.group)}"></i></span><small>${percent}</small></button>`;
+      const visual=hasSize?(state.reverseSize?(max-value)/Math.max(1,max)*100:value/max*100):0;
+      return `<button type="button" class="storageRank ${layer.id===selectedId?'selected':''}" data-layer="${esc(layer.id)}" aria-pressed="${layer.id===selectedId}" title="${esc(layer.name)} · ${fmt(value)}"><span class="storageRankName">${esc(layer.name)}</span><strong>${hasSize?bytes(value):'Unknown'}</strong><span class="storageRankTrack"><i style="width:${visual}%;background:${color(layer.group)}"></i></span><small>${percent}</small></button>`;
     }).join('')||'<div class="storageEmpty">No matching datasets.</div>';
     pager.innerHTML=`<button class="btn" type="button" data-step="-1" ${state.page===0?'disabled':''} aria-label="Previous size rankings">←</button><span>${candidates.length?state.page*12+1:0}–${Math.min(candidates.length,state.page*12+12)} / ${candidates.length}</span><button class="btn" type="button" data-step="1" ${state.page>=pages-1?'disabled':''} aria-label="Next size rankings">→</button>`;
   }
@@ -97,6 +99,7 @@ function renderStorage(data){
     if(button.dataset.layer){selectLayer(button.dataset.layer);return}
     if(button.dataset.measure){state.measure=button.dataset.measure;state.page=0;renderActiveTab();return}
     if(button.dataset.scope){state.scope=button.dataset.scope;state.page=0;renderActiveTab();return}
+    if(button.dataset.reverseSize){state.reverseSize=!state.reverseSize;state.page=0;renderActiveTab();return}
     if(button.dataset.step){state.page+=Number(button.dataset.step);drawRanking();return}
     if(button.dataset.more){state.page=2;state.query='';search.value='';drawRanking();search.focus();return}
     if(button.classList.contains('storageMethod')){const about=wrap.querySelector('.storageAbout');about.hidden=!about.hidden;button.setAttribute('aria-expanded',String(!about.hidden))}

@@ -130,6 +130,8 @@ button{cursor:pointer}
 .twisty{width:18px;height:18px;display:grid;place-items:center;color:var(--muted)}
 .disclosure{width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:1.5}.disclosure.open{transform:rotate(90deg)}
 .catalogueIcon{width:18px;height:18px;color:var(--muted)}
+.attachmentIndicator{width:16px;height:16px;display:grid;place-items:center;color:var(--accent);position:relative}
+.attachmentIndicator svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .treeRow[data-kind=branch] .catalogueIcon{color:var(--accent)}
 .nodeLabel{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .tocCount{font-size:10px;color:var(--muted);font-variant-numeric:tabular-nums;text-align:right;padding-left:8px}

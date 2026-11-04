@@ -37,7 +37,8 @@ function compute(nodes,edges,options={}){
   const levels=depth(nodes,edges),maxDepth=Math.max(0,...levels.values());
   const depthCounts=new Map();for(const value of levels.values())depthCounts.set(value,(depthCounts.get(value)||0)+1);
   const dependencyRows=Math.max(3,Math.floor((height-48)/62)),dependencyColumns=[...depthCounts.values()].reduce((sum,count)=>sum+Math.ceil(count/dependencyRows),0);
-  let nodeWidth=type==='radial'?clamp((width-48)/7.5,108,184):type==='balanced'?clamp(Math.sqrt(width*height/Math.max(1,nodes.length))*1.25,128,188):clamp((width-48-22*Math.max(0,dependencyColumns-1)-80)/Math.max(1,dependencyColumns),108,190);
+  const densityScale=clamp(Number(options.densityScale)||1,.78,1.12);
+  let nodeWidth=type==='radial'?clamp((width-48)/7.5*densityScale,96,168):type==='balanced'?clamp(Math.sqrt(width*height/Math.max(1,nodes.length))*1.25*densityScale,112,188):clamp((width-48-22*Math.max(0,dependencyColumns-1)-80)/Math.max(1,dependencyColumns)*densityScale,96,190);
   if(options.ego)nodeWidth=clamp((width/2-120)/2-14,128,188);
   for(const n of nodes)metrics.set(n.id,metric(n,nodeWidth,n.id===options.selected,measure));
   const maxHeight=Math.max(54,...[...metrics.values()].map(m=>m.h)),gap=clamp(8*(options.spacing||135)/135,4,18);
@@ -46,7 +47,7 @@ function compute(nodes,edges,options={}){
   if(type==='radial'){
     positions.set(root.id,{x:0,y:0});
     const remaining=nodes.filter(n=>n.id!==root.id).sort(compare),n=remaining.length;
-    const scale=Math.max(1,Math.sqrt(n/36)),rx=Math.max(150,(width-nodeWidth)/2-28)*scale,ry=Math.max(120,(height-maxHeight)/2-28)*scale;
+    const scale=clamp(Number(options.densityScale)||1,.78,1.08),rx=Math.max(130,(width-nodeWidth)/2-24)*scale,ry=Math.max(100,(height-maxHeight)/2-24)*scale;
     const cells=new Map(),cellW=nodeWidth+gap,cellH=60;
     const ranges=(p,m)=>({a:Math.floor((p.x-m.w/2-5)/cellW),b:Math.floor((p.x+m.w/2+5)/cellW),c:Math.floor((p.y-m.h/2-5)/cellH),d:Math.floor((p.y+m.h/2+5)/cellH)});
     function insert(id,p){const r=ranges(p,metrics.get(id));for(let x=r.a;x<=r.b;x++)for(let y=r.c;y<=r.d;y++){const key=x+','+y;if(!cells.has(key))cells.set(key,[]);cells.get(key).push(id)}}

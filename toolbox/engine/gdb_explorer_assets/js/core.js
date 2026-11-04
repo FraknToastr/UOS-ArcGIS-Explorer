@@ -72,7 +72,7 @@ function buildTree(){
     set.features.forEach((feature,fi)=>{
       const fields=String(feature.searchText||"");
       if(!normalizedFields.has(fields))normalizedFields.set(fields,fields.toLowerCase());
-      add({id:`layer-${si}-${fi}`,label:feature.name,labelSearch:String(feature.name||"").toLowerCase(),groupSearch,fieldSearch:normalizedFields.get(fields),type:feature.kind==="Table"?"table":"feature",geometry:feature.geometryType,count:feature.rowCount,children:[]},parent);
+      add({id:`layer-${si}-${fi}`,label:feature.name,labelSearch:String(feature.name||"").toLowerCase(),groupSearch,fieldSearch:normalizedFields.get(fields),type:feature.kind==="Table"?"table":"feature",geometry:feature.geometryType,count:feature.rowCount,attachments:Number(feature.attachmentSummary?.count||0),children:[]},parent);
     });
   });
   treeCatalogueSets=DATA.featureSets;treeCatalogueSources=DATA.featureSets.map(set=>set.features);
@@ -120,7 +120,7 @@ function renderTreeWindow(scrollPosition){
   treeWindowKey=key;
   treeNodes.innerHTML=rows.map((node,index)=>{
     const selected=node.id===selectedId;
-    return `<div role="treeitem" id="toc-${node.id}" aria-level="${node.depth+1}" aria-posinset="${node.pos||1}" aria-setsize="${node.siblings||1}" aria-selected="${selected}" ${node.branch?`aria-expanded="${node.open}"`:""} tabindex="${node.id===treeFocus?0:-1}" class="treeRow${selected?" active":""}" data-id="${node.id}" data-kind="${node.branch?"branch":"layer"}" style="top:${(start+index)*TREE_ROW_HEIGHT}px;--depth:${node.depth}"><span class="twisty" aria-hidden="true">${node.branch?`<svg viewBox="0 0 16 16" class="disclosure ${node.open?"open":""}"><path d="m6 3 5 5-5 5"/></svg>`:""}</span>${treeIcon(node.type,node.geometry)}<span class="nodeLabel" title="${esc(node.label)}">${esc(node.label)}</span><span class="tocCount">${node.count==null?"":Number(node.count).toLocaleString()}</span></div>`;
+    return `<div role="treeitem" id="toc-${node.id}" aria-level="${node.depth+1}" aria-posinset="${node.pos||1}" aria-setsize="${node.siblings||1}" aria-selected="${selected}" ${node.branch?`aria-expanded="${node.open}"`:""} tabindex="${node.id===treeFocus?0:-1}" class="treeRow${selected?" active":""}" data-id="${node.id}" data-kind="${node.branch?"branch":"layer"}" style="top:${(start+index)*TREE_ROW_HEIGHT}px;--depth:${node.depth}"><span class="twisty" aria-hidden="true">${node.branch?`<svg viewBox="0 0 16 16" class="disclosure ${node.open?"open":""}"><path d="m6 3 5 5-5 5"/></svg>`:""}</span>${treeIcon(node.type,node.geometry)}${node.attachments?`<span class="attachmentIndicator" data-tooltip="${node.attachments.toLocaleString()} attachments" aria-label="${node.attachments.toLocaleString()} attachments available"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.5 12.5 13 7a3.5 3.5 0 0 1 5 5l-6.5 6.5a5 5 0 1 1-7-7L11 5.5"/></svg></span>`:""}<span class="nodeLabel" data-tooltip="${esc(node.label)}">${esc(node.label)}</span><span class="tocCount">${node.count==null?"":Number(node.count).toLocaleString()}</span></div>`;
   }).join("")+(treeNotice?`<div class="emptyTree" role="presentation" style="position:absolute;top:${treeRows.length*TREE_ROW_HEIGHT}px">${esc(treeNotice)}</div>`:"");
   if(hadFocus)treeNodes.querySelector(`[data-id="${CSS.escape(treeFocus)}"]`)?.focus({preventScroll:true});
 }
