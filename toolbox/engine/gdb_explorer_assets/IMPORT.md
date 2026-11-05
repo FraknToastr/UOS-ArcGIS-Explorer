@@ -1,10 +1,12 @@
-# GDB Explorer browser ZIP import — v22.7
+# GDB Explorer File import
 
-Open `../index.html` and choose GDB Explorer, or open this folder's `index.html` directly. Use **Open ZIP** to select an existing modular GDB Explorer v22.5, v22.6 or v22.7 export. A complete Explorer Suite ZIP containing one GDB catalogue also works, including exports wrapped in an enclosing folder. This reads browser exports, not raw `.gdb` folders or geodatabases.
+Open `../index.html` and choose GDB Explorer, or open this folder's `index.html` directly. Use **Open GDB Explorer File** to select an existing modular GDB Explorer v22.5, v22.6 or v22.7 export. A complete Explorer Suite ZIP containing one GDB catalogue also works, including exports wrapped in an enclosing folder. This reads browser exports, not raw `.gdb` folders or geodatabases.
 
-**Replace ZIP** validates a new candidate before replacing the current catalogue. **Cancel import** keeps the previous workspace. **Clear ZIP** releases imported files, cached data and attachment URLs. Imports stay in this page's memory; they are released on reload, navigation or closing the page. Nothing is uploaded, saved to browser databases or written back to the source ZIP.
+**Replace GDB Explorer File** validates a new candidate before replacing the current catalogue. **Cancel import** keeps the previous workspace. **Clear GDB Explorer File** releases imported files, cached data and attachment URLs. Imports stay in this page's memory; they are released on reload, navigation or closing the page. Nothing is uploaded, saved to browser databases or written back to the source ZIP.
 
 The supplied toolbox can still generate a complete offline app. In those generated apps, the bundled catalogue starts automatically. Their Open ZIP control can open another compatible export without re-exporting the original geodatabase.
+
+When no file is loaded, a toolbox illustration shows how to create a GDB Explorer File in ArcGIS Pro: add the **GDB Explorer** toolbox, open **Create GDB Explorer File**, choose the geodatabase and output file, and Run. **Update GDB Explorer File** refreshes an existing export. These are display names in the Conference toolbox; its physical filename remains unchanged. A GDB Explorer File is still a ZIP archive, not a new extension or data format. Clearing an imported file returns to the illustration; generated apps with bundled GDB data keep their normal dataset-selection welcome.
 
 ## What is read
 

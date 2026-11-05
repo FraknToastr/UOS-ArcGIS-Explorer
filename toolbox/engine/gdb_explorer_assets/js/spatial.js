@@ -518,7 +518,7 @@ async function renderSpatial(version=renderVersion,signal=renderAbort.signal){
     const attrs=row
       ? cols.map((c,i)=>`<tr><th>${esc(c)}</th><td>${esc(row[i])}</td></tr>`).join("")
       : `<tr><th>${esc(oidName||"Object ID")}</th><td>${esc(feature?.properties?.id??"")}</td></tr>`;
-    const unavailable=row?'':'<div class="notice" style="margin:9px 0">Attribute details are unavailable for this feature in this export. Re-export with GDB Explorer v22.5 to include details for every mapped feature.</div>';
+    const unavailable=row?'':'<div class="notice" style="margin:9px 0">Attribute details are unavailable for this feature in this export. Create a new GDB Explorer File to include details for every mapped feature.</div>';
 
     const thumbs=atts.length
       ? `<div class="popupAttachments">${atts.slice(0,40).map((a,ai)=>{

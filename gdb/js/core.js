@@ -10,6 +10,7 @@ window.addEventListener("unhandledrejection",e=>{
 
 let DATA=window.GDBCatalogue;
 delete window.GDBCatalogue;
+let workspaceLoaded=!document.body.hasAttribute('data-gdb-import-shell');
 const tree=document.getElementById("tree");
 const treeNodes=document.getElementById("treeNodes");
 const panel=document.getElementById("panel");
@@ -305,7 +306,7 @@ async function renderActiveTab(){
     else if(tab==="storage")renderStorage(storage);
   }catch(err){
     if(signal.aborted||err?.name==="AbortError"||version!==renderVersion)return;
-    panel.innerHTML=`<div class="welcome"><div><strong>Could not load this view</strong>${esc(err.message)}<br>Extract the complete ZIP and keep all folders together. <button class="btn" id="retryView" type="button">Retry</button></div></div>`;
+    panel.innerHTML=`<div class="welcome"><div><strong>Could not load this view</strong>${esc(err.message)}<br>Extract the complete GDB Explorer File and keep all folders together. <button class="btn" id="retryView" type="button">Retry</button></div></div>`;
     document.getElementById("retryView").onclick=renderActiveTab;
   }
 }
@@ -316,19 +317,30 @@ window.addEventListener("pagehide",()=>{renderAbort?.abort();disposeView();GDBCh
 
 // Switch catalogues only after import validation completes. View generations and
 // abort signals prevent reads from the previous session from repainting this one.
+function renderWorkspaceWelcome(){
+  const noFile=!workspaceLoaded;
+  if(noFile){
+    document.getElementById('layerTitle').textContent='GDB Explorer File';
+    document.getElementById('layerMeta').textContent='Create a file in ArcGIS Pro, then open it here.';
+    panel.replaceChildren(document.getElementById('gdbFileWelcome').content.cloneNode(true));
+    return;
+  }
+  panel.innerHTML='<div class="welcome"><div><strong>'+esc(DATA.name||'GDB Explorer')+'</strong>'+(DATA.featureSets.length?'Choose a dataset to load it.':'No datasets are available in this GDB Explorer File.')+'</div></div>';
+}
+
 window.GDBWorkspace={
-  replace(data,archive=null){
+  replace(data,archive=null,empty=false){
     renderAbort?.abort();++renderVersion;disposeView();disposeView=()=>{};closeAttachmentModal();window.GDBCellValue?.close();
-    GDBChunks.setArchive(archive);DATA=data;selected=null;selectedSet=null;selectedId=null;tableState=null;activeTab='attributes';
+    GDBChunks.setArchive(archive);DATA=data;workspaceLoaded=!empty;selected=null;selectedSet=null;selectedId=null;tableState=null;activeTab='attributes';
     treeCatalogueSets=null;treeExpansion.clear();treeQuery='';treeFocus='gdb-root';tree.scrollTop=0;
     document.getElementById('treeSearch').value='';document.getElementById('gdbEyebrow').textContent=DATA.name||'Geodatabase';
     document.getElementById('layerTitle').textContent='Select a layer';document.getElementById('layerMeta').textContent='Choose a dataset from the explorer to load it.';document.getElementById('layerPills').innerHTML='';
     tabs.querySelectorAll('.tab').forEach(tab=>tab.classList.toggle('active',tab.dataset.tab==='attributes'));
-    panel.innerHTML='<div class="welcome"><div><strong>'+esc(DATA.name||'GDB Explorer')+'</strong>'+(DATA.featureSets.length?'Choose a dataset to load it.':'Open a modular GDB Explorer export ZIP to explore its data. Imports remain in this tab until you clear them or close the page.')+'</div></div>';
+    renderWorkspaceWelcome();
     buildTree();window.dispatchEvent(new CustomEvent('gdbworkspacechange'));
   },
-  empty(){return {name:'No ZIP open',path:'',featureSets:[],summary:{}}},
-  clear(){this.replace(this.empty())}
+  empty(){return {name:'No GDB Explorer File open',path:'',featureSets:[],summary:{}}},
+  clear(){this.replace(this.empty(),null,true)}
 };
 
 function applyExpansionLevel(level,persist=true){
@@ -386,6 +398,7 @@ const savedWidth=Number(GDBChunks.storage.getItem("gdbExplorerSidebarWidth"));
 if(savedWidth>=420&&savedWidth<=900)root.style.setProperty("--sidebar",savedWidth+"px");
 
 document.getElementById("treeLegend").innerHTML=treeLegendHTML();
+renderWorkspaceWelcome();
 buildTree();
 const savedExpandLevel=Number(GDBChunks.storage.getItem("gdbExplorerExpandLevel")||3);
 applyExpansionLevel([1,2,3].includes(savedExpandLevel)?savedExpandLevel:3);

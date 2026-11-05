@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="37" height="29" viewBox="0 0 37 29" role="img" aria-label="Toolbox icon" shape-rendering="crispEdges">
+  <title>Toolbox icon</title>
+  <path fill="#6e6e6e" d="M12 2h12v4h-2V4h-8v2h-2z"/>
+  <rect x="2" y="6" width="32" height="20" fill="#c96b4b"/>
+  <rect x="3" y="12" width="30" height="1" fill="#f8f8f8"/>
+  <rect x="15" y="8" width="6" height="8" fill="#f8f8f8"/>
+  <rect x="16" y="9" width="4" height="2" fill="#6e6e6e"/>
+  <rect x="16" y="12" width="4" height="3" fill="#6e6e6e"/>
+</svg>

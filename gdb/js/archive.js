@@ -6,10 +6,10 @@ const LIMITS=Object.freeze({entries:200000,catalogue:32*MiB,chunk:128*MiB,attach
 const abort=()=>new DOMException('Import or view cancelled','AbortError');
 const reserved=/^(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])(?:\.|$)/i;
 function pathName(value,directory=false){
-  if(typeof value!=='string'||!value||value.length>2048||/[\\\x00-\x1f<>:"|?*#%]/.test(value)||value.startsWith('/'))throw Error('Unsafe ZIP resource path');
+  if(typeof value!=='string'||!value||value.length>2048||/[\\\x00-\x1f<>:"|?*#%]/.test(value)||value.startsWith('/'))throw Error('Unsafe GDB Explorer File resource path');
   const name=directory&&value.endsWith('/')?value.slice(0,-1):value;
   const parts=name.split('/');
-  if(parts.some(part=>!part||part==='.'||part==='..'||/[. ]$/.test(part)||reserved.test(part)))throw Error('Unsafe or ambiguous ZIP resource path: '+value);
+  if(parts.some(part=>!part||part==='.'||part==='..'||/[. ]$/.test(part)||reserved.test(part)))throw Error('Unsafe or ambiguous GDB Explorer File resource path: '+value);
   return name;
 }
 function parseWrapped(text,kind){
@@ -32,7 +32,7 @@ function validCatalogue(data,entries,prefix){
     if(typeof ref!=='object'||typeof ref.path!=='string'||!ref.path.startsWith('data/'))throw Error('Invalid catalogue data reference');
     count(ref.count,'page count');
     const entry=entries.get(prefix+pathName(ref.path));
-    if(!entry||entry.directory)throw Error('ZIP is missing referenced data: '+ref.path);
+    if(!entry||entry.directory)throw Error('GDB Explorer File is missing referenced data: '+ref.path);
     if(entry.uncompressedSize>LIMITS.chunk)throw Error('Referenced data exceeds the 128 MiB chunk limit: '+ref.path);
   };
   check(data.storageFile,true);check(data.metadataFile);
@@ -60,15 +60,15 @@ function validCatalogue(data,entries,prefix){
   return data;
 }
 async function prepare(file,signal,onProgress=()=>{}){
-  if(!(file instanceof Blob)||file.size<22)throw Error('Choose a complete GDB Explorer export ZIP; raw .gdb folders are not supported');
-  if(!window.zip?.ZipReader)throw Error('The bundled ZIP reader is missing. Extract the complete Explorer Suite folder.');
+  if(!(file instanceof Blob)||file.size<22)throw Error('Choose a compatible GDB Explorer File (.zip); raw .gdb folders are not supported');
+  if(!window.zip?.ZipReader)throw Error('The file reader is missing. Extract the complete GDB Explorer installation folder.');
   if(signal?.aborted)throw abort();
   const nativeStreams=window.__GDB_IMPORT_TEST__?.nativeStreams!==false;
   zip.configure({maxWorkers:1,chunkSize:64*1024,terminateWorkerTimeout:1000,workerStartupTimeout:1500,useWebWorkers:true});
   // zip.js reads the central directory at once. Bound that allocation separately
   // from decompressed payloads; payload reads remain streamed and bounded below.
   const input=new zip.BlobReader(file),read=input.readUint8Array.bind(input);
-  input.readUint8Array=(offset,length,...args)=>{if(length>LIMITS.directoryRead)throw Error('ZIP directory exceeds the 64 MiB metadata-read limit');return read(offset,length,...args)};
+  input.readUint8Array=(offset,length,...args)=>{if(length>LIMITS.directoryRead)throw Error('GDB Explorer File directory exceeds the 64 MiB metadata-read limit');return read(offset,length,...args)};
   const reader=new zip.ZipReader(input,{useWebWorkers:true,useCompressionStream:nativeStreams,checkSignature:true,checkCrc32:true,checkOverlappingEntry:true,strictness:'strict'});
   const lifetime=new AbortController(),entries=new Map(),aliases=new Set(),directories=new Set(),files=new Set(),urls=new Map(),scopeEpochs=new Map();
   let disposed=false,entryReads=0,readBytes=0,ioQueue=Promise.resolve();
@@ -76,15 +76,15 @@ async function prepare(file,signal,onProgress=()=>{}){
   const dispose=()=>{if(disposed)return;disposed=true;lifetime.abort();for(const value of urls.values())URL.revokeObjectURL(value.url);urls.clear();entries.clear();reader.close().catch(()=>{})};
   async function extractNow(entry,limit,viewSignal,text){
     active();if(viewSignal?.aborted)throw abort();
-    if(!entry||entry.directory)throw Error('ZIP resource is missing');
-    if(entry.uncompressedSize>limit)throw Error('ZIP resource exceeds its '+(limit/MiB)+' MiB read limit');
+    if(!entry||entry.directory)throw Error('GDB Explorer File resource is missing');
+    if(entry.uncompressedSize>limit)throw Error('GDB Explorer File resource exceeds its '+(limit/MiB)+' MiB read limit');
     const controller=new AbortController(),cancel=()=>controller.abort();
     lifetime.signal.addEventListener('abort',cancel,{once:true});viewSignal?.addEventListener('abort',cancel,{once:true});signal?.addEventListener('abort',cancel,{once:true});
     const parts=[],decoder=text?new TextDecoder('utf-8',{fatal:true}):null;let count=0;
     let yielded=performance.now();
     const writable=new WritableStream({async write(chunk){
       if(controller.signal.aborted)throw abort();count+=chunk.byteLength;
-      if(count>limit||count>entry.uncompressedSize)throw Error('ZIP resource exceeds its declared or allowed size');
+      if(count>limit||count>entry.uncompressedSize)throw Error('GDB Explorer File resource exceeds its declared or allowed size');
       parts.push(text?decoder.decode(chunk,{stream:true}):chunk.slice());
       // If workers are blocked, zip.js uses its bundled inline inflater. Yield
       // between bounded output chunks rather than running an unbroken unzip.
@@ -92,7 +92,7 @@ async function prepare(file,signal,onProgress=()=>{}){
     }});
     try{
       await entry.getData(writable,{signal:controller.signal,checkSignature:true,checkCrc32:true,checkOverlappingEntry:true,useWebWorkers:true,useCompressionStream:nativeStreams});active();
-      if(count!==entry.uncompressedSize)throw Error('ZIP resource size does not match its directory entry');
+      if(count!==entry.uncompressedSize)throw Error('GDB Explorer File resource size does not match its directory entry');
       entryReads++;readBytes+=count;
       return text?parts.join('')+decoder.decode():new Blob(parts);
     }finally{lifetime.signal.removeEventListener('abort',cancel);viewSignal?.removeEventListener('abort',cancel);signal?.removeEventListener('abort',cancel)}
@@ -102,37 +102,37 @@ async function prepare(file,signal,onProgress=()=>{}){
   try{
     let count=0;
     for await(const entry of reader.getEntriesGenerator()){
-      active();if(++count>LIMITS.entries)throw Error('ZIP exceeds the 200,000 entry limit');
+      active();if(++count>LIMITS.entries)throw Error('GDB Explorer File exceeds the 200,000 entry limit');
       const name=pathName(entry.filename,entry.directory),identity=name.normalize('NFC').toLowerCase();
       const mode=(entry.externalFileAttributes>>>16)&0xf000;
-      if(aliases.has(identity))throw Error('ZIP contains duplicate or case-aliased resource paths');
-      if(mode&&mode!==0x8000&&mode!==0x4000)throw Error('ZIP contains a symbolic link or non-regular member');
-      if(entry.encrypted)throw Error('Encrypted ZIP entries are not supported');
-      if(!Number.isSafeInteger(entry.uncompressedSize)||entry.uncompressedSize<0||!Number.isSafeInteger(entry.compressedSize)||entry.compressedSize<0)throw Error('Invalid ZIP entry size');
-      if(!entry.directory&&![0,8].includes(entry.compressionMethod))throw Error('Unsupported ZIP compression method');
+      if(aliases.has(identity))throw Error('GDB Explorer File contains duplicate or case-aliased resource paths');
+      if(mode&&mode!==0x8000&&mode!==0x4000)throw Error('GDB Explorer File contains a symbolic link or non-regular member');
+      if(entry.encrypted)throw Error('Encrypted GDB Explorer File entries are not supported');
+      if(!Number.isSafeInteger(entry.uncompressedSize)||entry.uncompressedSize<0||!Number.isSafeInteger(entry.compressedSize)||entry.compressedSize<0)throw Error('Invalid GDB Explorer File entry size');
+      if(!entry.directory&&![0,8].includes(entry.compressionMethod))throw Error('Unsupported GDB Explorer File compression method');
       aliases.add(identity);entries.set(name,entry);
       (entry.directory?directories:files).add(identity);
       const parts=identity.split('/');for(let i=1;i<parts.length;i++)directories.add(parts.slice(0,i).join('/'));
-      if(count%512===0){onProgress('Checking ZIP directory · '+count.toLocaleString()+' entries');await new Promise(resolve=>setTimeout(resolve,0))}
+      if(count%512===0){onProgress('Checking GDB Explorer File directory · '+count.toLocaleString()+' entries');await new Promise(resolve=>setTimeout(resolve,0))}
     }
-    for(const filePath of files)if(directories.has(filePath))throw Error('ZIP contains a file/folder path collision');
+    for(const filePath of files)if(directories.has(filePath))throw Error('GDB Explorer File contains a file/folder path collision');
     const catalogues=[...entries.keys()].filter(name=>name==='data/catalogue.js'||name.endsWith('/data/catalogue.js'));
-    if(catalogues.length!==1)throw Error('Choose one modular GDB Explorer export or suite ZIP containing exactly one data/catalogue.js');
+    if(catalogues.length!==1)throw Error('Choose one compatible GDB Explorer File containing exactly one data/catalogue.js');
     const catalogueName=catalogues[0],prefix=catalogueName.slice(0,-'data/catalogue.js'.length);
     const info=entries.get(prefix+'BUILD_INFO.json');
-    if(!info)throw Error('GDB BUILD_INFO.json is missing. Re-export using GDB Explorer v22.5 or later.');
+    if(!info)throw Error('GDB BUILD_INFO.json is missing. Create a new GDB Explorer File using the toolbox.');
     const build=JSON.parse(await extract(info,MiB,signal,true));
-    if(!build||!['22.5','22.6','22.7'].includes(build.version))throw Error('Unsupported GDB export version. Use a modular v22.5, v22.6 or v22.7 export.');
+    if(!build||!['22.5','22.6','22.7'].includes(build.version))throw Error('Unsupported GDB Explorer File format. Create a new file using the GDB Explorer toolbox.');
     onProgress('Reading catalogue…');
     const catalogue=validCatalogue(parseWrapped(await extract(entries.get(catalogueName),LIMITS.catalogue,signal,true),'catalogue'),entries,prefix);
     active();
-    return {catalogue,name:typeof file.name==='string'?file.name:'GDB export.zip',version:build.version,dispose,
+    return {catalogue,name:typeof file.name==='string'?file.name:'GDB_Explorer_File.zip',version:build.version,dispose,
       async load(ref,viewSignal){const name=pathName(ref.path);if(!name.startsWith('data/'))throw Error('Imported data must be beneath data/');return parseWrapped(await extract(entries.get(prefix+name),LIMITS.chunk,viewSignal,true),'chunk')},
       weight(ref){return entries.get(prefix+pathName(ref.path))?.uncompressedSize||0},
       async attachmentURL(attachment,viewSignal,scope='view'){
         const scopeEpoch=scopeEpochs.get(scope)||0;
         const name=pathName(attachment.dataUrl);if(!name.startsWith('attachments/'))throw Error('Invalid imported attachment path');
-        const entry=entries.get(prefix+name);if(!entry)throw Error('Attachment is missing from the ZIP');
+        const entry=entries.get(prefix+name);if(!entry)throw Error('Attachment is missing from the GDB Explorer File');
         const key=scope+'\n'+name,existing=urls.get(key);if(existing)return existing.url;
         const viewBytes=[...urls.values()].filter(value=>value.scope==='view').reduce((sum,value)=>sum+value.bytes,0);
         if(scope==='view'&&(entry.uncompressedSize>16*MiB||viewBytes+entry.uncompressedSize>64*MiB))throw Error('Thumbnail memory limit reached; use View or Download');

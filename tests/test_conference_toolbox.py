@@ -44,7 +44,7 @@ class ConferenceTests(unittest.TestCase):
         with patch("webbrowser.open") as launch:
             conference = load_conference()
             toolbox = conference.Toolbox()
-            self.assertEqual(toolbox.label, "UOS Explorer Suite — Conference Edition")
+            self.assertEqual(toolbox.label, "GDB Explorer")
             self.assertNotEqual(toolbox.alias, conference._standard.Toolbox().alias)
             self.assertEqual([tool.__name__ for tool in toolbox.tools], ["ChatGPTPytFactory", "BuildExplorerSuite", "MergeExistingExplorer"])
             factory = toolbox.tools[0]()
@@ -55,9 +55,40 @@ class ConferenceTests(unittest.TestCase):
             for name in ("BuildExplorerSuite", "MergeExistingExplorer"):
                 wrapped, original = getattr(conference, name), getattr(conference._standard, name)
                 self.assertIs(wrapped.execute, original.execute)
-                self.assertEqual(wrapped().label, original().label)
-                self.assertEqual(parameter_contract(wrapped()), parameter_contract(original()))
+                self.assertEqual(wrapped().label, "Create GDB Explorer File" if name == "BuildExplorerSuite" else "Update GDB Explorer File")
+                actual, previous = parameter_contract(wrapped()), parameter_contract(original())
+                for current, old in zip(actual, previous):
+                    for field in ("name", "datatype", "parameterType", "direction"):
+                        self.assertEqual(current[field], old[field], "Parameter contract stays compatible")
+                    self.assertNotRegex(current["displayName"], r"U[·]?OS|Suite|v\d")
+                self.assertEqual(actual[1]["displayName"], "Output GDB Explorer File")
+                self.assertNotIn("UOS", Path(actual[1]["valueAsText"]).name)
+                self.assertEqual(wrapped().getParameterInfo()[1].filter.list, ["zip"])
+                if name == "BuildExplorerSuite":
+                    self.assertEqual(actual[7]["valueAsText"], "GDB Explorer")
+                else:
+                    self.assertEqual(actual[0]["displayName"], "Input GDB Explorer File")
             launch.assert_not_called()
+
+    def test_output_defaults_and_validation_use_file_naming(self):
+        conference = self.conference
+        for cls in (conference.BuildExplorerSuite, conference.MergeExistingExplorer):
+            tool = cls()
+            parameters = tool.getParameterInfo()
+            parameters[0].value = "/fake/Parks.gdb" if cls is conference.BuildExplorerSuite else "/fake/Parks_UOS_Explorer.zip"
+            tool.updateParameters(parameters)
+            self.assertIn("Parks", parameters[1].valueAsText)
+            self.assertIn("GDB_Explorer_File", parameters[1].valueAsText)
+            self.assertNotIn("UOS", Path(parameters[1].valueAsText).name)
+            parameters[1].value = "/fake/User chosen output.zip"
+            parameters[0].value = "/fake/Another.gdb" if cls is conference.BuildExplorerSuite else "/fake/Another.zip"
+            tool.updateParameters(parameters)
+            self.assertEqual(parameters[1].valueAsText, "/fake/User chosen output.zip")
+            parameters[1].value = "/fake/invalid.txt"
+            tool.updateMessages(parameters)
+            self.assertIn("GDB Explorer File", parameters[1].error)
+        for source in ("Parks_GDB_Explorer_File.zip", "Parks_GDB_Explorer_File_Updated.zip", "Parks_GDB_Explorer.zip", "Parks_UOS_Explorer.zip"):
+            self.assertEqual(Path(conference.MergeExistingExplorer()._default(source)).name, "Parks_GDB_Explorer_File_Updated.zip")
 
     def test_factory_launches_conference_copy_only_on_execute(self):
         conference = self.conference
@@ -124,6 +155,7 @@ class ConferenceTests(unittest.TestCase):
                     for name in ("index.html", "gdb/index.html", "online/index.html", "launcher/satellites.js"):
                         self.assertIn(name, archive.namelist())
                     self.assertNotIn("data-gdb-import-shell", archive.read("gdb/index.html").decode())
+                    self.assertIn("gdb/assets/toolbox.svg", archive.namelist())
 
     def test_original_sources_unchanged(self):
         for path, before in ORIGINAL_HASHES.items():

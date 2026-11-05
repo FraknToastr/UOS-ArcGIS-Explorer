@@ -1,8 +1,7 @@
 /* Ordered file:// startup, with visible failures instead of an empty navigation. */
 (() => {
   'use strict';
-  const VERSION='22.7';
-  let complete=false,startupError='';
+    let complete=false,startupError='';
   const tree=document.getElementById('treeNodes'),panel=document.getElementById('panel');
   const escape=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
   window.GDBStartup={ready(){complete=true}};
@@ -10,7 +9,7 @@
   window.addEventListener('error',onError);
   function fail(error){
     if(tree)tree.innerHTML='<div class="startupTreeError"><strong>Catalogue could not load.</strong><br>See the startup error in the main panel.</div>';
-    if(panel)panel.innerHTML=`<div class="startupFailure" role="alert"><strong>GDB Explorer v${VERSION} could not initialise</strong><div>${escape(error.message||error)}</div><p>Extract every file from the exported app ZIP into one folder before opening index.html. If a file is missing, re-export using the complete v${VERSION} toolbox installation.</p></div>`;
+    if(panel)panel.innerHTML=`<div class="startupFailure" role="alert"><strong>GDB Explorer could not initialise</strong><div>${escape(error.message||error)}</div><p>Extract the complete GDB Explorer File into one folder before opening index.html. If a file is missing, create a new GDB Explorer File using the toolbox.</p></div>`;
   }
   function load(path){
     return new Promise((resolve,reject)=>{
@@ -27,7 +26,7 @@
     try{
       await load('js/runtime.js');
       if(!window.GDBChunks)throw new Error('The runtime did not initialise: js/runtime.js. '+(startupError||''));
-      if(document.body.hasAttribute('data-gdb-import-shell')){document.title='GDB Explorer · UOS Explorer Suite';window.GDBCatalogue={name:'No ZIP open',path:'',featureSets:[],summary:{}}}
+      if(document.body.hasAttribute('data-gdb-import-shell')){document.title='GDB Explorer';window.GDBCatalogue={name:'No GDB Explorer File open',path:'',featureSets:[],summary:{}}}
       else await load('data/catalogue.js');
       const data=window.GDBCatalogue;
       if(!data||!Array.isArray(data.featureSets)||data.featureSets.some(group=>!group||!Array.isArray(group.features)))throw new Error('The catalogue is missing or invalid: data/catalogue.js. '+(startupError||''));

@@ -84,7 +84,7 @@ button,input{font:inherit}
 button{cursor:pointer}
 .shell{height:100vh;display:grid;grid-template-rows:auto minmax(0,1fr)}
 .hero{
-  position:sticky;top:0;z-index:30;height:82px;display:flex;align-items:center;
+  position:sticky;top:0;z-index:30;min-height:82px;height:auto;display:flex;align-items:center;
   justify-content:space-between;padding:12px 20px;border-bottom:1px solid var(--line);
   background:var(--surface);box-shadow:var(--shadow)
 }
@@ -95,7 +95,7 @@ button{cursor:pointer}
 .startupFailure strong{display:block;margin-bottom:8px}
 .startupFailure p{color:var(--muted);font-size:12px}
 .startupTreeError{padding:14px;color:var(--muted);font-size:12px}
-.heroTools{display:flex;align-items:center;gap:8px}
+.heroTools{display:flex;align-items:center;justify-content:flex-end;gap:8px;min-width:0;flex-wrap:wrap}
 .iconBtn{border:1px solid var(--line);background:var(--surface2);color:var(--text);border-radius:9px;padding:8px 11px}
 .workbench{min-height:0;display:grid;grid-template-columns:var(--sidebar) 7px minmax(0,1fr)}
 .sidebar{min-width:420px;max-width:900px;min-height:0;display:grid;grid-template-rows:auto minmax(0,1fr);gap:12px;padding:12px;background:var(--surface);border-right:1px solid var(--line)}
@@ -111,8 +111,7 @@ button{cursor:pointer}
 .tocLegendIcon .catalogueIcon{width:20px;height:20px}
 .tocLegendItem:nth-child(-n+2) .catalogueIcon{color:var(--accent)}
 .tocLegendIcon .disclosure{width:12px;height:16px}
-.expandLevelControl{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 10px}
-.expandLabel{font-size:12px;font-weight:700;color:var(--muted)}
+.expandLevelControl{display:flex;align-items:center;justify-content:flex-start;margin:0 10px}
 .expandPills{display:inline-grid;grid-template-columns:repeat(3,1fr);padding:3px;border:1px solid var(--line);border-radius:999px;background:var(--surface2);min-width:150px}
 .expandPill{border:0;background:transparent;color:var(--muted);border-radius:999px;padding:6px 12px;font-weight:800;line-height:1}
 .expandPill:hover{color:var(--text)}
@@ -163,6 +162,16 @@ button{cursor:pointer}
 .panelScroll{position:absolute;inset:0;overflow:auto;padding:12px}
 .welcome{height:100%;display:grid;place-items:center;padding:30px;text-align:center;color:var(--muted)}
 .welcome strong{display:block;color:var(--text);font-size:21px;margin-bottom:6px}
+.gdb-file-welcome{position:absolute;inset:0;overflow:auto;padding:24px;display:flex;flex-direction:column;align-items:center}
+.gdb-file-toolbox{flex:none;width:min(760px,100%);margin-block:auto;container-type:inline-size}
+.toolbox-lid{aspect-ratio:37/16;overflow:hidden}
+.toolbox-lid img{display:block;width:100%;height:auto}
+.toolbox-face{box-sizing:border-box;margin:0 8.108108% 0 5.405405%;min-height:27.027cqw;padding:clamp(16px,3cqw,24px) clamp(16px,4cqw,32px);background:#c96b4b;color:#20110c;text-align:left}
+.toolbox-face h2{margin:0 0 12px;font-size:clamp(20px,3.7cqw,28px);font-weight:800;line-height:1.2}
+.toolbox-face ol{margin:0;padding-left:1.5em;font-size:clamp(14px,2.6cqw,18px);line-height:1.45}
+.toolbox-face li+li{margin-top:6px}
+.toolbox-face li::marker{font-weight:800}
+.toolbox-face strong{font-weight:750}
 .tableViewport{position:absolute;inset:0;overflow:auto;background:var(--surface)}
 .dataTable{border-collapse:separate;border-spacing:0;min-width:100%;width:max-content;font-size:12.5px}
 .dataTable th,.dataTable td{padding:7px 9px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);white-space:nowrap;max-width:460px;overflow:hidden;text-overflow:ellipsis}

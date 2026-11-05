@@ -2,7 +2,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('n
 const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'/home/n0rt/.nvm/versions/node/v22.23.2/lib/node_modules/@playwright/test/node_modules/playwright');
 const root=path.resolve(__dirname,'..'),output='/tmp/uos-formation-gdb-review';fs.mkdirSync(output,{recursive:true});
 (async()=>{
- const server=http.createServer((req,res)=>{const name=path.resolve(root,'.'+decodeURIComponent(req.url.split('?')[0]));if(!name.startsWith(root+path.sep)){res.writeHead(403).end();return}fs.readFile(name,(error,data)=>{if(error){res.writeHead(404).end();return}res.setHeader('Content-Type',name.endsWith('.js')?'application/javascript':name.endsWith('.css')?'text/css':name.endsWith('.png')?'image/png':'text/html');res.end(data)})});
+ const server=http.createServer((req,res)=>{const name=path.resolve(root,'.'+decodeURIComponent(req.url.split('?')[0]));if(!name.startsWith(root+path.sep)){res.writeHead(403).end();return}fs.readFile(name,(error,data)=>{if(error){res.writeHead(404).end();return}res.setHeader('Content-Type',name.endsWith('.js')?'application/javascript':name.endsWith('.css')?'text/css':name.endsWith('.png')?'image/png':name.endsWith('.svg')?'image/svg+xml':'text/html');res.end(data)})});
  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
  let browser;
  try{
@@ -71,7 +71,7 @@ const root=path.resolve(__dirname,'..'),output='/tmp/uos-formation-gdb-review';f
   assert(await page.locator('.gdbImportMessages').isHidden(),'empty message row takes no space');
   await page.evaluate(()=>GDBImport.open(new File(['invalid archive'],'invalid.zip',{type:'application/zip'})));
   assert(await page.locator('.gdbImportMessages').isVisible(),'an actual import error reveals the message row');
-  assert.match(await page.locator('#gdbImportError').innerText(),/ZIP could not open/);
+  assert.match(await page.locator('#gdbImportError').innerText(),/GDB Explorer File could not open/);
   await page.reload();await page.waitForFunction(()=>!!window.GDBImport);
   assert(await page.locator('.gdbImportMessages').isHidden(),'reload starts with no default instruction row');
   await page.evaluate(async()=>{

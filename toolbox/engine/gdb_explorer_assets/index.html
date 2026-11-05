@@ -12,9 +12,9 @@
   <header class="hero"><a class="suiteReturn" href="../index.html" aria-label="Return to launcher" title="Return to launcher">←</a>
     <div>
       <div class="eyebrow" id="gdbEyebrow"></div>
-      <h1>GDB Explorer <small class="appVersion">v22.7</small></h1>
+      <h1>Geodatabase Explorer</h1>
     </div>
-    <div class="heroTools"><div class="gdbImportControls" aria-label="ZIP workspace"><input id="gdbZipInput" type="file" accept=".zip,application/zip" hidden><button id="gdbOpenZip" class="iconBtn" type="button">Open ZIP</button><button id="gdbCancelImport" class="iconBtn" type="button" hidden>Cancel import</button><button id="gdbClearImport" class="iconBtn" type="button" disabled>Clear ZIP</button></div>
+    <div class="heroTools"><div class="gdbImportControls" aria-label="GDB Explorer File controls"><input id="gdbZipInput" type="file" accept=".zip,application/zip" aria-label="Choose a GDB Explorer File" hidden><button id="gdbOpenZip" class="iconBtn" type="button">Open GDB Explorer File</button><button id="gdbCancelImport" class="iconBtn" type="button" hidden>Cancel import</button><button id="gdbClearImport" class="iconBtn" type="button" disabled>Clear GDB Explorer File</button></div>
       <button class="iconBtn" id="themeToggle" type="button" title="Toggle light/dark theme">Light theme</button>
     </div>
   </header>
@@ -28,11 +28,10 @@
       <fieldset class="tocFrame tocContentsFrame">
         <legend>GBD Contents</legend>
         <div class="expandLevelControl" role="group" aria-label="Hierarchy expansion level">
-          <span class="expandLabel">Expand</span>
           <div class="expandPills" id="expandPills">
-            <button class="expandPill" data-level="1" type="button">1</button>
-            <button class="expandPill" data-level="2" type="button">2</button>
-            <button class="expandPill active" data-level="3" type="button">3</button>
+            <button class="expandPill" data-level="1" type="button">Database</button>
+            <button class="expandPill" data-level="2" type="button">Folders</button>
+            <button class="expandPill active" data-level="3" type="button">Layers</button>
           </div>
         </div>
         <input class="search" id="treeSearch" aria-label="Filter the geodatabase catalogue" type="search" placeholder="Filter datasets, layers or attributes…">
@@ -63,7 +62,7 @@
           <button class="tab" data-tab="metadata" type="button">Metadata</button>
         </div>
         <div class="panel" id="panel">
-          <div class="welcome"><div><strong>GDB Explorer</strong>Select a layer in the file-explorer navigation.</div></div>
+          <div class="welcome"><div><strong>GDB Explorer</strong>Loading workspace…</div></div>
         </div>
       </section>
     </main>
@@ -96,6 +95,22 @@
   </div>
 </dialog>
 
+<template id="gdbFileWelcome">
+  <section class="gdb-file-welcome" aria-labelledby="gdbFileGuideTitle">
+    <div class="gdb-file-toolbox">
+      <div class="toolbox-lid" aria-hidden="true"><img src="assets/toolbox.svg" alt="" width="37" height="29"></div>
+      <div class="toolbox-face">
+        <h2 id="gdbFileGuideTitle">Create a GDB Explorer File</h2>
+        <ol>
+          <li>In ArcGIS Pro, add the <strong>GDB Explorer</strong> toolbox.</li>
+          <li>Open <strong>Create GDB Explorer File</strong>.</li>
+          <li>Choose your geodatabase and output file, then <strong>Run</strong>.</li>
+          <li>Click <strong>Open GDB Explorer File</strong> here.</li>
+        </ol>
+      </div>
+    </div>
+  </section>
+</template>
 <script src="js/bootstrap.js" defer></script>
 <script src="../launcher/tooltips.js" defer></script></body>
 </html>
