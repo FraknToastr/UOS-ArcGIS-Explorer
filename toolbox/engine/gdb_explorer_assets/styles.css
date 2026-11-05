@@ -123,15 +123,16 @@ button{cursor:pointer}
 .resizer{cursor:col-resize;background:transparent;position:relative}
 .resizer:after{content:"";position:absolute;left:2px;top:0;bottom:0;width:2px;background:var(--line)}
 .resizer:hover:after,.resizer.dragging:after{background:var(--accent)}
-.treeRow{position:absolute;left:0;right:0;display:grid;grid-template-columns:18px 19px minmax(0,1fr) auto;gap:6px;align-items:center;height:30px;padding:0 9px 0 calc(6px + var(--depth)*18px);border-radius:3px;color:var(--text);user-select:none;cursor:pointer;border-left:2px solid transparent;font-size:12px;background-image:repeating-linear-gradient(90deg,transparent 0,transparent 17px,var(--line) 17px,var(--line) 18px);background-size:calc(var(--depth)*18px) 100%;background-repeat:no-repeat;background-position:8px 0}
+.treeRow{position:absolute;left:0;right:0;display:grid;grid-template-columns:22px 24px minmax(0,1fr) 104px 48px;gap:6px;align-items:center;height:36px;padding:0 9px 0 calc(6px + var(--depth)*18px);border-radius:3px;color:var(--text);user-select:none;cursor:pointer;border-left:2px solid transparent;font-size:12px;background-image:repeating-linear-gradient(90deg,transparent 0,transparent 17px,var(--line) 17px,var(--line) 18px);background-size:calc(var(--depth)*18px) 100%;background-repeat:no-repeat;background-position:8px 0}
 .treeRow:hover{background-color:var(--surface2)}
 .treeRow.active{background-color:var(--accent-soft);border-left-color:var(--accent)}
 .treeRow:focus{outline:none}.treeRow:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
-.twisty{width:18px;height:18px;display:grid;place-items:center;color:var(--muted)}
-.disclosure{width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:1.5}.disclosure.open{transform:rotate(90deg)}
-.catalogueIcon{width:18px;height:18px;color:var(--muted)}
-.attachmentIndicator{width:16px;height:16px;display:grid;place-items:center;color:var(--accent);position:relative}
-.attachmentIndicator svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.twisty{width:22px;height:24px;display:grid;place-items:center;color:var(--muted)}
+.disclosure{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.5}.disclosure.open{transform:rotate(90deg)}
+.catalogueIcon{width:22px;height:22px;color:var(--muted)}
+.treeIndicators{display:flex;align-items:center;justify-content:flex-end;gap:4px;min-width:0}
+.geometryIndicator,.attachmentIndicator{width:22px;height:24px;display:grid;place-items:center;flex:none;color:var(--muted)}
+.attachmentIndicator{color:var(--accent);font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif;font-size:22px;line-height:1}
 .treeRow[data-kind=branch] .catalogueIcon{color:var(--accent)}
 .nodeLabel{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .tocCount{font-size:10px;color:var(--muted);font-variant-numeric:tabular-nums;text-align:right;padding-left:8px}

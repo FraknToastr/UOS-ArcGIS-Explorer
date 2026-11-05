@@ -33,7 +33,7 @@ document.getElementById("gdbEyebrow").textContent=DATA.name||"Geodatabase";
 // Complete catalogue model, with a bounded window of visible tree rows.
 let treePage=0,treeQuery="",treeRows=[],treeModel=new Map(),treeFocus="gdb-root",treeNotice="";
 let expansionLevel=Number(GDBChunks.storage.getItem("gdbExplorerExpandLevel")||3);
-const treeExpansion=new Map(),TREE_ROW_HEIGHT=30,TREE_WINDOW=200;
+const treeExpansion=new Map(),TREE_ROW_HEIGHT=36,TREE_WINDOW=200;
 let treeCatalogueSets=null,treeCatalogueSources=[],treeCatalogueLayers=[];
 let treeRevision=0,treeWindowKey="";
 function treeIcon(type,geometry){
@@ -45,6 +45,13 @@ function treeIcon(type,geometry){
     g.includes("line")?'<path d="m3 18 6-12 6 10 6-12"/>':
     g.includes("polygon")?'<path d="m4 5 13-2 4 12-9 6-9-7Z"/>':'<path d="M5 3h10l4 4v14H5ZM14 3v5h5M8 12h8M8 16h8"/>';
   return `<svg class="catalogueIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true">${path}</svg>`;
+}
+function treeIndicators(node){
+  const geometry=node.branch?node.geometryTypes||[]:[];
+  const icons=geometry.map(type=>`<span class="geometryIndicator" role="img" aria-label="${type} features" data-tooltip="${type} features">${treeIcon("feature",type)}</span>`).join("");
+  const description=node.branch?"Contains features with attachments":"Attachments available";
+  const clip=node.hasAttachments?`<span class="attachmentIndicator" role="img" aria-label="${description}" data-tooltip="${description}"><span aria-hidden="true">📎</span></span>`:"";
+  return `<span class="treeIndicators">${icons}${clip}</span>`;
 }
 function buildTree(){
   const scrollPosition=tree.scrollTop;
@@ -75,7 +82,27 @@ function buildTree(){
       add({id:`layer-${si}-${fi}`,label:feature.name,labelSearch:String(feature.name||"").toLowerCase(),groupSearch,fieldSearch:normalizedFields.get(fields),type:feature.kind==="Table"?"table":"feature",geometry:feature.geometryType,count:feature.rowCount,attachments:Number(feature.attachmentSummary?.count||0),children:[]},parent);
     });
   });
-  treeCatalogueSets=DATA.featureSets;treeCatalogueSources=DATA.featureSets.map(set=>set.features);
+  // Summaries describe the complete catalogue, independently of search or expansion.
+const summarize=node=>{
+  const types=new Set();
+  let attachments=!!node.attachments;
+  if(node.children.length){
+    for(const child of node.children){
+      summarize(child);
+      child.geometryTypes.forEach(type=>types.add(type));
+      attachments=attachments||child.hasAttachments;
+    }
+  }else if(node.type==="feature"){
+    const geometry=String(node.geometry||"").toLowerCase();
+    if(geometry.includes("point"))types.add("Point");
+    else if(geometry.includes("line"))types.add("Polyline");
+    else if(geometry.includes("polygon"))types.add("Polygon");
+  }
+  node.geometryTypes=["Point","Polyline","Polygon"].filter(type=>types.has(type));
+  node.hasAttachments=attachments;
+};
+summarize(rootNode);
+treeCatalogueSets=DATA.featureSets;treeCatalogueSources=DATA.featureSets.map(set=>set.features);
   treeCatalogueLayers=[...model.values()].filter(node=>node.type==="feature"||node.type==="table");
   }
   const mark=(node,ancestorMatch=false)=>{
@@ -120,7 +147,7 @@ function renderTreeWindow(scrollPosition){
   treeWindowKey=key;
   treeNodes.innerHTML=rows.map((node,index)=>{
     const selected=node.id===selectedId;
-    return `<div role="treeitem" id="toc-${node.id}" aria-level="${node.depth+1}" aria-posinset="${node.pos||1}" aria-setsize="${node.siblings||1}" aria-selected="${selected}" ${node.branch?`aria-expanded="${node.open}"`:""} tabindex="${node.id===treeFocus?0:-1}" class="treeRow${selected?" active":""}" data-id="${node.id}" data-kind="${node.branch?"branch":"layer"}" style="top:${(start+index)*TREE_ROW_HEIGHT}px;--depth:${node.depth}"><span class="twisty" aria-hidden="true">${node.branch?`<svg viewBox="0 0 16 16" class="disclosure ${node.open?"open":""}"><path d="m6 3 5 5-5 5"/></svg>`:""}</span>${treeIcon(node.type,node.geometry)}${node.attachments?`<span class="attachmentIndicator" data-tooltip="${node.attachments.toLocaleString()} attachments" aria-label="${node.attachments.toLocaleString()} attachments available"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.5 12.5 13 7a3.5 3.5 0 0 1 5 5l-6.5 6.5a5 5 0 1 1-7-7L11 5.5"/></svg></span>`:""}<span class="nodeLabel" data-tooltip="${esc(node.label)}">${esc(node.label)}</span><span class="tocCount">${node.count==null?"":Number(node.count).toLocaleString()}</span></div>`;
+    return `<div role="treeitem" id="toc-${node.id}" aria-level="${node.depth+1}" aria-posinset="${node.pos||1}" aria-setsize="${node.siblings||1}" aria-selected="${selected}" ${node.branch?`aria-expanded="${node.open}"`:""} tabindex="${node.id===treeFocus?0:-1}" class="treeRow${selected?" active":""}" data-id="${node.id}" data-kind="${node.branch?"branch":"layer"}" style="top:${(start+index)*TREE_ROW_HEIGHT}px;--depth:${node.depth}"><span class="twisty" aria-hidden="true">${node.branch?`<svg viewBox="0 0 16 16" class="disclosure ${node.open?"open":""}"><path d="m6 3 5 5-5 5"/></svg>`:""}</span>${treeIcon(node.type,node.geometry)}<span class="nodeLabel" data-tooltip="${esc(node.label)}">${esc(node.label)}</span>${treeIndicators(node)}<span class="tocCount">${node.count==null?"":Number(node.count).toLocaleString()}</span></div>`;
   }).join("")+(treeNotice?`<div class="emptyTree" role="presentation" style="position:absolute;top:${treeRows.length*TREE_ROW_HEIGHT}px">${esc(treeNotice)}</div>`:"");
   if(hadFocus)treeNodes.querySelector(`[data-id="${CSS.escape(treeFocus)}"]`)?.focus({preventScroll:true});
 }

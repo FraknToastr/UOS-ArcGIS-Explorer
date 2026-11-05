@@ -1,0 +1,31 @@
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const vm=require('node:vm');
+const path=require('node:path');
+const source=fs.readFileSync(path.join(__dirname,'../gdb/js/core.js'),'utf8');
+const context=vm.createContext({console});
+const feature=(name,geometryType,count=0,kind='Feature Class')=>({name,geometryType,kind,rowCount:27,attachmentSummary:{count}});
+context.DATA={name:'Test GDB',featureSets:[{name:'Mixed',path:'Mixed',features:[feature('Points','Multipoint'),feature('Lines','Polyline'),feature('Areas','Polygon',3)]},{name:'Tables',path:'Mixed/Tables',features:[feature('Photos',null,2,'Table')]},{name:'Empty',path:'Empty',features:[]}]};
+vm.runInContext(`const tree={scrollTop:0};const treeNodes={setAttribute(){},style:{}};const document={activeElement:null};
+const GDBChunks={storage:{getItem(){return '1'}}};
+${source.slice(source.indexOf('let treePage='),source.indexOf('function renderTreeWindow('))}
+function renderTreeWindow(){}
+buildTree();`,context);
+const read=code=>vm.runInContext(code,context);
+assert.equal(read('treeRows.length'),1,'root starts collapsed');
+assert.deepEqual(Array.from(read('treeModel.get("gdb-root").geometryTypes')),['Point','Polyline','Polygon']);
+assert.equal(read('treeModel.get("gdb-root").hasAttachments'),true);
+assert.equal(read('treeModel.get("folder-1").hasAttachments'),true,'nested table attachments propagate');
+assert.equal(read('treeModel.get("folder-2").hasAttachments'),false);
+read('treeQuery="points";buildTree()');
+assert.deepEqual(Array.from(read('treeModel.get("folder-0").geometryTypes')),['Point','Polyline','Polygon'],'search retains complete dataset summary');
+const html=read('treeIndicators(treeModel.get("folder-0"))');
+assert.equal((html.match(/geometryIndicator/g)||[]).length,3);
+assert(html.includes('📎'));
+assert(html.includes('Contains features with attachments'));
+const row=read('treeIndicators(treeModel.get("layer-0-2"))');
+assert(row.includes('Attachments available'));
+assert(!row.includes('geometryIndicator'),'feature geometry is already in its leading icon');
+assert(!row.includes('3 attachments'),'attachment count omitted');
+assert.equal(read('TREE_ROW_HEIGHT'),36);
+console.log('PASS: collapsed and nested dataset summaries, mixed geometry, table attachments, search, and Clippy indicators');
