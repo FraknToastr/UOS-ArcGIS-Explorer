@@ -48,20 +48,21 @@ class LocalGovernmentToolboxTests(unittest.TestCase):
     def setUpClass(cls):
         cls.conference = load_toolbox()
 
-    def test_six_numbered_entries_and_unique_alias_without_launching(self):
+    def test_seven_numbered_entries_and_unique_alias_without_launching(self):
         with patch("webbrowser.open") as launch:
             module = load_toolbox()
             toolbox = module.Toolbox()
             self.assertEqual(toolbox.label, "GIS in Local Government 2026")
             self.assertEqual([tool().label for tool in toolbox.tools], [
                 "1. GeoGlyph",
-                "2. ChatGPT Pyt Factory",
-                "3. GDB & ArcGIS Online Explorer",
-                "4. Create GDB Explorer File",
-                "5. Update GDB Explorer File",
-                "6. Views & Vistas · Adelaide Park Lands",
+                "2. Geo's Remote Control",
+                "3. ChatGPT Pyt Factory",
+                "4. GDB & ArcGIS Online Explorer",
+                "5. Create GDB Explorer File",
+                "6. Update GDB Explorer File",
+                "7. Views & Vistas · Adelaide Park Lands",
             ])
-            self.assertEqual(len({tool.__name__ for tool in toolbox.tools}), 6)
+            self.assertEqual(len({tool.__name__ for tool in toolbox.tools}), 7)
             aliases = [toolbox.alias, module._conference.Toolbox().alias,
                        module._conference._standard.Toolbox().alias]
             self.assertEqual(len(set(aliases)), 3)
@@ -73,6 +74,7 @@ class LocalGovernmentToolboxTests(unittest.TestCase):
         module = self.conference
         for cls, url in [
             (module.GeoGlyph, "https://frakntoastr.github.io/geoglyph-locate-2026/"),
+            (module.GeosRemoteControl, "https://arcg.is/1jGXTW1"),
             (module.GDBArcGISOnlineExplorer, "https://frakntoastr.github.io/UOS-ArcGIS-Explorer/"),
             (module.ViewsAndVistas, "https://frakntoastr.github.io/adelaide-views-vistas-panorama-explorer/"),
         ]:
@@ -88,7 +90,7 @@ class LocalGovernmentToolboxTests(unittest.TestCase):
 
     def test_website_failures_report_the_manual_url_and_raise(self):
         module = self.conference
-        for cls in (module.GeoGlyph, module.GDBArcGISOnlineExplorer, module.ViewsAndVistas):
+        for cls in (module.GeoGlyph, module.GeosRemoteControl, module.GDBArcGISOnlineExplorer, module.ViewsAndVistas):
             for effect in (False, OSError("browser unavailable")):
                 errors = []
                 options = {"side_effect": effect} if isinstance(effect, Exception) else {"return_value": effect}

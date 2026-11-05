@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Six conference entry points; keep the complete explorer-suite-v2 folder together.
+"""Seven conference entry points; keep the complete explorer-suite-v2 folder together.
 
 The existing Conference toolbox supplies the local Factory and GDB tools. This
 additional toolbox leaves both earlier toolboxes and their companion files intact.
@@ -44,6 +44,7 @@ class Toolbox:
         self.alias = "gis_local_government_2026"
         self.tools = [
             GeoGlyph,
+            GeosRemoteControl,
             ChatGPTPytFactory,
             GDBArcGISOnlineExplorer,
             CreateGDBExplorerFile,
@@ -81,14 +82,20 @@ class GeoGlyph(_OpenWebsite):
     url = "https://frakntoastr.github.io/geoglyph-locate-2026/"
 
 
+class GeosRemoteControl(_OpenWebsite):
+    label = "2. Geo's Remote Control"
+    title = "Geo's Remote Control"
+    url = "https://arcg.is/1jGXTW1"
+
+
 class ChatGPTPytFactory(_conference.ChatGPTPytFactory):
     def __init__(self):
         super().__init__()
-        self.label = "2. ChatGPT Pyt Factory"
+        self.label = "3. ChatGPT Pyt Factory"
 
 
 class GDBArcGISOnlineExplorer(_OpenWebsite):
-    label = "3. GDB & ArcGIS Online Explorer"
+    label = "4. GDB & ArcGIS Online Explorer"
     title = "GDB & ArcGIS Online Explorer"
     url = "https://frakntoastr.github.io/UOS-ArcGIS-Explorer/"
 
@@ -96,16 +103,16 @@ class GDBArcGISOnlineExplorer(_OpenWebsite):
 class CreateGDBExplorerFile(_conference.BuildExplorerSuite):
     def __init__(self):
         super().__init__()
-        self.label = "4. Create GDB Explorer File"
+        self.label = "5. Create GDB Explorer File"
 
 
 class UpdateGDBExplorerFile(_conference.MergeExistingExplorer):
     def __init__(self):
         super().__init__()
-        self.label = "5. Update GDB Explorer File"
+        self.label = "6. Update GDB Explorer File"
 
 
 class ViewsAndVistas(_OpenWebsite):
-    label = "6. Views & Vistas · Adelaide Park Lands"
+    label = "7. Views & Vistas · Adelaide Park Lands"
     title = "Views & Vistas · Adelaide Park Lands"
     url = "https://frakntoastr.github.io/adelaide-views-vistas-panorama-explorer/"
