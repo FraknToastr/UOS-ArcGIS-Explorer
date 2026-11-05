@@ -11,4 +11,5 @@ test_reports/
 # Editor and OS metadata
 .DS_Store
 Thumbs.db
+*:Zone.Identifier
 .vscode/

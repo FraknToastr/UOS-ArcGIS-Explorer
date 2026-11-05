@@ -19,9 +19,14 @@
     </div>
   </header>
 
-  <div class="gdbImportMessages"><span id="gdbImportStatus" role="status" aria-live="polite">Open a modular GDB Explorer export ZIP · session only</span><span id="gdbImportError" role="alert"></span></div><div class="workbench">
+  <div class="gdbImportMessages"><span id="gdbImportStatus" role="status" aria-live="polite"></span><span id="gdbImportError" role="alert"></span></div><div class="workbench">
     <aside class="sidebar" id="sidebar">
-      <div class="sidebarHead">
+      <fieldset class="tocFrame tocLegendFrame">
+        <legend>Legend</legend>
+        <div id="treeLegend" class="tocLegend" role="group" aria-label="Catalogue icon legend"></div>
+      </fieldset>
+      <fieldset class="tocFrame tocContentsFrame">
+        <legend>GBD Contents</legend>
         <div class="expandLevelControl" role="group" aria-label="Hierarchy expansion level">
           <span class="expandLabel">Expand</span>
           <div class="expandPills" id="expandPills">
@@ -30,11 +35,11 @@
             <button class="expandPill active" data-level="3" type="button">3</button>
           </div>
         </div>
-      </div>
-      <input class="search" id="treeSearch" aria-label="Filter the geodatabase catalogue" type="search" placeholder="Filter datasets, layers or attributes…">
-      <nav class="tree" id="tree">
-        <div id="treeNodes"></div>
-      </nav>
+        <input class="search" id="treeSearch" aria-label="Filter the geodatabase catalogue" type="search" placeholder="Filter datasets, layers or attributes…">
+        <nav class="tree" id="tree">
+          <div id="treeNodes"></div>
+        </nav>
+      </fieldset>
     </aside>
 
     <div class="resizer" id="resizer" title="Drag to resize navigation"></div>

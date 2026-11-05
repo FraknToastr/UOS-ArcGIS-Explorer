@@ -98,15 +98,26 @@ button{cursor:pointer}
 .heroTools{display:flex;align-items:center;gap:8px}
 .iconBtn{border:1px solid var(--line);background:var(--surface2);color:var(--text);border-radius:9px;padding:8px 11px}
 .workbench{min-height:0;display:grid;grid-template-columns:var(--sidebar) 7px minmax(0,1fr)}
-.sidebar{min-width:420px;max-width:900px;min-height:0;display:grid;grid-template-rows:auto auto minmax(0,1fr);background:var(--surface);border-right:1px solid var(--line)}
-.sidebarHead{padding:12px;border-bottom:1px solid var(--line)}
-.expandLevelControl{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.sidebar{min-width:420px;max-width:900px;min-height:0;display:grid;grid-template-rows:auto minmax(0,1fr);gap:12px;padding:12px;background:var(--surface);border-right:1px solid var(--line)}
+.gdbImportMessages:not(:has(> :not(:empty))){display:none}
+.shell:not(:has(.gdbImportMessages > :not(:empty))){grid-template-rows:auto minmax(0,1fr)}
+.tocFrame{min-width:0;min-height:0;margin:0;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+.tocFrame>legend{padding:0 7px;margin-left:6px;color:var(--text);font-size:14px;font-weight:800;line-height:1.4}
+.tocLegendFrame{padding:8px 10px 10px}
+.tocContentsFrame{display:grid;grid-template-rows:auto auto minmax(0,1fr);padding:8px 0 0;overflow:hidden}
+.tocLegend{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px 8px;color:var(--muted);font-size:11px;line-height:1.25}
+.tocLegendItem{display:flex;align-items:center;gap:5px;min-width:0}
+.tocLegendIcon{display:flex;align-items:center;justify-content:center;flex:none;width:26px;height:22px}
+.tocLegendIcon .catalogueIcon{width:20px;height:20px}
+.tocLegendItem:nth-child(-n+2) .catalogueIcon{color:var(--accent)}
+.tocLegendIcon .disclosure{width:12px;height:16px}
+.expandLevelControl{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 10px}
 .expandLabel{font-size:12px;font-weight:700;color:var(--muted)}
 .expandPills{display:inline-grid;grid-template-columns:repeat(3,1fr);padding:3px;border:1px solid var(--line);border-radius:999px;background:var(--surface2);min-width:150px}
 .expandPill{border:0;background:transparent;color:var(--muted);border-radius:999px;padding:6px 12px;font-weight:800;line-height:1}
 .expandPill:hover{color:var(--text)}
 .expandPill.active{background:var(--accent-soft);color:var(--text);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--accent) 55%,transparent)}
-.search{width:calc(100% - 24px);margin:10px 12px;padding:9px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface2);color:var(--text)}
+.search{width:calc(100% - 20px);margin:10px;padding:9px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface2);color:var(--text)}
 .tree{min-height:0;overflow:auto;padding:0 7px 18px}
 
 .legend{

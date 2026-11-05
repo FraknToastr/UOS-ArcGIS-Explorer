@@ -1,3 +1,51 @@
+function gdbMetroTileUrl(key){
+  return `https://api.metromap.com.au/ogc/key/${encodeURIComponent(key)}/service?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=Australia_latest&STYLE=default&FORMAT=image/png&TILEMATRIXSET=webmercator&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}`;
+}
+
+// Track actual raster tiles, not the map's generic idle event (which also fires
+// when requests fail). A new source ID isolates each basemap selection.
+function createGDBBasemapFeedback(map,element,options={}){
+  const schedule=options.setTimeout||setTimeout,cancel=options.clearTimeout||clearTimeout;
+  let current=null,timeout=null,hide=null,disposed=false;
+  const labels={metromap:'MetroMap imagery',imagery:'Esri World Aerial',topo:'Esri World Topography',none:'Offline geometry'};
+  function clearTimers(){if(timeout!==null)cancel(timeout);if(hide!==null)cancel(hide);timeout=hide=null}
+  function show(message,status){element.style.display='';element.className='mapStatus'+(status?' '+status:'');element.textContent=message}
+  function fail(message){clearTimers();current.status='error';current.tile=null;show(message,'error')}
+  function visible(tile){
+    const id=tile.tileID?.canonical;if(!id||!map.getBounds)return true;
+    const bounds=map.getBounds(),n=2**id.z,west=id.x/n*360-180,east=(id.x+1)/n*360-180;
+    const latitude=y=>Math.atan(Math.sinh(Math.PI*(1-2*y/n)))*180/Math.PI;
+    const south=latitude(id.y+1),north=latitude(id.y);
+    return south<=bounds.getNorth()&&north>=bounds.getSouth()&&[-360,0,360].some(offset=>east+offset>=bounds.getWest()&&west+offset<=bounds.getEast());
+  }
+  function data(event){
+    if(disposed||!current||event.sourceId!==current.sourceId||!event.tile)return;
+    if(event.tile.state==='loaded'&&(!event.tile.hasData||event.tile.hasData())&&visible(event.tile))current.tile=event.tile;
+  }
+  function render(){
+    if(disposed||!current?.tile||!visible(current.tile)||current.status==='ok')return;
+    clearTimers();current.status='ok';show(labels[current.name]+' loaded','ok');
+    const selection=current;hide=schedule(()=>{if(!disposed&&current===selection&&current.status==='ok')element.style.display='none'},2200);
+  }
+  function error(event){
+    if(disposed||!current||event.sourceId!==current.sourceId)return;
+    const code=Number(event.error?.status);
+    fail(current.name==='metromap'
+      ?([401,403].includes(code)?'MetroMap access was rejected. Check the API key and imagery subscription, or choose another basemap.':'MetroMap imagery could not load. Check network access, imagery coverage and service availability, or choose another basemap.')
+      :labels[current.name]+' could not load. Check the network or choose another basemap.');
+  }
+  map.on('sourcedata',data);map.on('render',render);map.on('error',error);
+  return {
+    select(name,sourceId){
+      clearTimers();current={name,sourceId,status:name==='none'?'ok':'loading',tile:null};
+      show(name==='none'?'Map ready · Offline geometry':'Loading '+labels[name]+'…',name==='none'?'ok':'');
+      if(name!=='none')timeout=schedule(()=>{if(!disposed)fail(labels[name]+' has not loaded after 15 seconds. Check network access and imagery coverage, retry, or choose another basemap.')},15000);
+    },
+    handles:event=>!!current&&event.sourceId===current.sourceId,
+    dispose(){disposed=true;clearTimers();map.off('sourcedata',data);map.off('render',render);map.off('error',error)}
+  };
+}
+
 async function loadSpatialFeatureRow(item,feature,signal){
   const columns=item.attributeColumns||[];
   const oidIndex=columns.findIndex(name=>String(name).toLowerCase()===String(item.oidFieldName||'').toLowerCase());
@@ -120,7 +168,7 @@ async function renderSpatial(version=renderVersion,signal=renderAbort.signal){
         </div>
         <div class="mapDockBody" id="mapDockBody"></div>
       </aside>
-      <div class="mapStatus" id="mapStatus">Initialising MapLibre…</div>
+      <div class="mapStatus" id="mapStatus" role="status" aria-live="polite" aria-atomic="true">Initialising MapLibre…</div>
     </div>
   </div>`;
 
@@ -161,14 +209,14 @@ async function renderSpatial(version=renderVersion,signal=renderAbort.signal){
   signal.addEventListener("abort",closeMetroDialog,{once:true});
 
   function metroUrl(key){
-    return `https://api.metromap.com.au/ogc/key/${encodeURIComponent(key)}/SERVICE=WMTS&REQUEST=GetTile&LAYER=Australia_latest&FORMAT=image/png&TileMatrixSet=webmercator&TileMatrix={z}&TileRow={y}&TileCol={x}`;
+    return gdbMetroTileUrl(key);
   }
 
   function styleFor(tileUrl){
     const style={
       version:8,
       sources:{
-        base:{type:"raster",tiles:[tileUrl],tileSize:256,attribution:tileUrl===ESRI_TOPO||tileUrl===ESRI_IMAGERY?'Tiles © Esri':''},
+        base:{type:"raster",tiles:[tileUrl],tileSize:256,attribution:tileUrl===ESRI_TOPO||tileUrl===ESRI_IMAGERY?'Tiles © Esri': '© MetroMap / Aerometrex'},
         features:{type:"geojson",data:fc},
         selection:{type:"geojson",data:{type:"FeatureCollection",features:[]}}
       },
@@ -284,42 +332,29 @@ async function renderSpatial(version=renderVersion,signal=renderAbort.signal){
     return;
   }
 
-  const timers=new Set();
-  function later(callback,ms){const timer=setTimeout(()=>{timers.delete(timer);if(!disposed)callback()},ms);timers.add(timer)}
+  let baseSourceId=alwaysTopo?'base':null,baseSequence=0,basemapRun=0;
+  const basemapFeedback=createGDBBasemapFeedback(map,mapStatus);
+  basemapFeedback.select(currentBasemap,baseSourceId);
   disposeView=()=>{
     disposed=true;
-    for(const timer of timers)clearTimeout(timer);
-    timers.clear();
+    basemapFeedback.dispose();
     closeMetroDialog();
     currentFeature=null;currentPayload=null;metroSessionKey="";
     map.remove();
     item.spatialGeoJSON=null;
     window.maplibregl.clearPrewarmedResources?.();
   };
-  mapStatus.className="mapStatus";
-  mapStatus.textContent="Bundled MapLibre 5.3 object created · waiting for style load…";
-
   map.on("load",()=>{
     map.resize();
     requestAnimationFrame(()=>{if(!disposed)map.resize()});
-    mapStatus.className="mapStatus ok";
-    mapStatus.textContent=alwaysTopo?"Map ready · Esri World Topography":"Map ready · Offline geometry";
-    later(()=>{if(mapStatus)mapStatus.style.display="none"},2200);
-  });
-
-  map.on("idle",()=>{
-    if(mapStatus && !mapStatus.classList.contains("error")){
-      mapStatus.className="mapStatus ok";
-      mapStatus.textContent="Map rendered";
-      later(()=>{if(mapStatus)mapStatus.style.display="none"},1200);
-    }
   });
   map.on("error",e=>{
+    if(basemapFeedback.handles(e)||e.sourceId?.startsWith('gdb-base-'))return;
     const msg=e?.error?.message||e?.message||"Map rendering error";
-    console.error("MapLibre error",e);
     mapStatus.style.display="";
     mapStatus.className="mapStatus error";
-    mapStatus.textContent=msg;
+    // Network errors can contain the full WMTS URL, including its API key.
+    mapStatus.textContent=/https?:|metromap/i.test(msg)?'A map resource could not load. Check the network or choose another basemap.':String(msg).replaceAll(metroSessionKey||'\u0000','[redacted]').replaceAll(encodeURIComponent(metroSessionKey)||'\u0000','[redacted]');
   });
 
   map.addControl(new window.maplibregl.NavigationControl({
@@ -382,18 +417,18 @@ async function renderSpatial(version=renderVersion,signal=renderAbort.signal){
     }
     currentBasemap=name;
     if(name==="none")url=null;
-    map.setStyle(styleFor(url));
-    map.once("styledata",()=>{if(!disposed)fitLayer()});
+    const run=++basemapRun,sourceId=url?`gdb-base-${++baseSequence}`:null;
+    basemapFeedback.select(name,sourceId);
+    const install=()=>{
+      if(disposed||run!==basemapRun)return;
+      if(map.getLayer('base'))map.removeLayer('base');
+      if(baseSourceId&&map.getSource(baseSourceId))map.removeSource(baseSourceId);
+      baseSourceId=sourceId;
+      if(url){map.addSource(sourceId,{type:'raster',tiles:[url],tileSize:256,attribution:name==='metromap'?'© MetroMap / Aerometrex':'Tiles © Esri'});map.addLayer({id:'base',type:'raster',source:sourceId},'polygons')}
+    };
+    // A user can choose a basemap before the initial style has finished loading.
+    if(map.getLayer('polygons'))install();else map.once('styledata',install);
     document.querySelectorAll(".mapBtn[data-basemap]").forEach(b=>b.classList.toggle("active",b.dataset.basemap===name));
-    if(mapStatus){
-      mapStatus.style.display="";
-      mapStatus.className="mapStatus ok";
-      mapStatus.textContent="Basemap: "+(
-        name==="none"?"None (offline)":name==="imagery"?"Esri World Aerial":
-        name==="topo"?"Esri World Topography":"MetroMap"
-      );
-      later(()=>{if(mapStatus)mapStatus.style.display="none"},1600);
-    }
   }
 
   function openMetroDialog(){

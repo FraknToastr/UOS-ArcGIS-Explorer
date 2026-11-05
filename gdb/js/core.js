@@ -46,11 +46,21 @@ function treeIcon(type,geometry){
     g.includes("polygon")?'<path d="m4 5 13-2 4 12-9 6-9-7Z"/>':'<path d="M5 3h10l4 4v14H5ZM14 3v5h5M8 12h8M8 16h8"/>';
   return `<svg class="catalogueIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true">${path}</svg>`;
 }
+function treeDisclosure(open=false){return `<svg viewBox="0 0 16 16" class="disclosure ${open?"open":""}" aria-hidden="true"><path d="m6 3 5 5-5 5"/></svg>`}
+function treeAttachmentIndicator(description){return `<span class="attachmentIndicator" role="img" aria-label="${description}" data-tooltip="${description}"><span aria-hidden="true">📎</span></span>`}
+function treeLegendHTML(){
+ const items=[
+  [treeIcon('database'),'Geodatabase'],[treeIcon('folder'),'Dataset / folder'],[treeIcon('table'),'Table'],
+  [treeIcon('feature','Point'),'Point'],[treeIcon('feature','Polyline'),'Polyline'],[treeIcon('feature','Polygon'),'Polygon'],
+  [treeIcon('feature'),'Other feature'],[treeDisclosure()+treeDisclosure(true),'Expand / collapse'],[treeAttachmentIndicator('Attachments available'),'Attachments']
+ ];
+ return items.map(([icon,label])=>`<span class="tocLegendItem"><span class="tocLegendIcon" aria-hidden="true">${icon}</span><span>${label}</span></span>`).join('');
+}
 function treeIndicators(node){
   const geometry=node.branch?node.geometryTypes||[]:[];
   const icons=geometry.map(type=>`<span class="geometryIndicator" role="img" aria-label="${type} features" data-tooltip="${type} features">${treeIcon("feature",type)}</span>`).join("");
   const description=node.branch?"Contains features with attachments":"Attachments available";
-  const clip=node.hasAttachments?`<span class="attachmentIndicator" role="img" aria-label="${description}" data-tooltip="${description}"><span aria-hidden="true">📎</span></span>`:"";
+  const clip=node.hasAttachments?treeAttachmentIndicator(description):"";
   return `<span class="treeIndicators">${icons}${clip}</span>`;
 }
 function buildTree(){
@@ -147,7 +157,7 @@ function renderTreeWindow(scrollPosition){
   treeWindowKey=key;
   treeNodes.innerHTML=rows.map((node,index)=>{
     const selected=node.id===selectedId;
-    return `<div role="treeitem" id="toc-${node.id}" aria-level="${node.depth+1}" aria-posinset="${node.pos||1}" aria-setsize="${node.siblings||1}" aria-selected="${selected}" ${node.branch?`aria-expanded="${node.open}"`:""} tabindex="${node.id===treeFocus?0:-1}" class="treeRow${selected?" active":""}" data-id="${node.id}" data-kind="${node.branch?"branch":"layer"}" style="top:${(start+index)*TREE_ROW_HEIGHT}px;--depth:${node.depth}"><span class="twisty" aria-hidden="true">${node.branch?`<svg viewBox="0 0 16 16" class="disclosure ${node.open?"open":""}"><path d="m6 3 5 5-5 5"/></svg>`:""}</span>${treeIcon(node.type,node.geometry)}<span class="nodeLabel" data-tooltip="${esc(node.label)}">${esc(node.label)}</span>${treeIndicators(node)}<span class="tocCount">${node.count==null?"":Number(node.count).toLocaleString()}</span></div>`;
+    return `<div role="treeitem" id="toc-${node.id}" aria-level="${node.depth+1}" aria-posinset="${node.pos||1}" aria-setsize="${node.siblings||1}" aria-selected="${selected}" ${node.branch?`aria-expanded="${node.open}"`:""} tabindex="${node.id===treeFocus?0:-1}" class="treeRow${selected?" active":""}" data-id="${node.id}" data-kind="${node.branch?"branch":"layer"}" style="top:${(start+index)*TREE_ROW_HEIGHT}px;--depth:${node.depth}"><span class="twisty" aria-hidden="true">${node.branch?`${treeDisclosure(node.open)}`:""}</span>${treeIcon(node.type,node.geometry)}<span class="nodeLabel" data-tooltip="${esc(node.label)}">${esc(node.label)}</span>${treeIndicators(node)}<span class="tocCount">${node.count==null?"":Number(node.count).toLocaleString()}</span></div>`;
   }).join("")+(treeNotice?`<div class="emptyTree" role="presentation" style="position:absolute;top:${treeRows.length*TREE_ROW_HEIGHT}px">${esc(treeNotice)}</div>`:"");
   if(hadFocus)treeNodes.querySelector(`[data-id="${CSS.escape(treeFocus)}"]`)?.focus({preventScroll:true});
 }
@@ -375,6 +385,7 @@ resizer.addEventListener("pointerup",()=>{drag=false;resizer.classList.remove("d
 const savedWidth=Number(GDBChunks.storage.getItem("gdbExplorerSidebarWidth"));
 if(savedWidth>=420&&savedWidth<=900)root.style.setProperty("--sidebar",savedWidth+"px");
 
+document.getElementById("treeLegend").innerHTML=treeLegendHTML();
 buildTree();
 const savedExpandLevel=Number(GDBChunks.storage.getItem("gdbExplorerExpandLevel")||3);
 applyExpansionLevel([1,2,3].includes(savedExpandLevel)?savedExpandLevel:3);

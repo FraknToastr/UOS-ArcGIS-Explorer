@@ -48,6 +48,12 @@
       drop-shadow(0 0 24px rgba(255,55,220,.18));
   }
 
+ #alien-car{aspect-ratio:3/2;overflow:visible}
+ #alien-car image{pointer-events:none;user-select:none}
+ #next-ufo-formation{outline:none;pointer-events:none}
+ #next-ufo-formation path{fill:transparent;stroke:transparent;stroke-width:3;pointer-events:fill;cursor:pointer}
+ #next-ufo-formation[aria-disabled=true] path{cursor:default}
+
   @media(max-width:700px){
     #alien-car{
       width:min(80vw,525px);

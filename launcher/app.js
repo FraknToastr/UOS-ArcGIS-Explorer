@@ -11,6 +11,25 @@ let motionPreference=reduced.matches;
 const destinations=window.UOS_WORKSPACE?.destinations||{};
 for(const [id,key,fallback] of [['open-gdb-explorer','gdb','./gdb/index.html'],['open-arcgis-online-explorer','arcgis','./online/index.html']])$(id).setAttribute('href',destinations[key]||fallback);
 let globe=null,satellites=null,frame=0,last=0,clock=0,spinAngle=0,spaceLast=-Infinity,phi=.35,drag=null,disposed=false,globeDirty=true,geometryDirty=true,resizeTimer=0,failed=false;
+const formations=window.UOSSatellites.createFormationController(),formationButton=$('next-ufo-formation');
+let formationButtonState='';
+function formationUnavailable(){
+ if(settings.craftType!=='ufos')return 'Choose UFOs in Globe controls to change formation';
+ if(!settings.satellites)return 'Show orbiting craft in Globe controls to change formation';
+ if(failed||!satellites||disposed)return 'UFO animation is unavailable';
+ if(reduced.matches)return 'Formation changes are paused by reduced motion';
+ if(!settings.autoRotate)return 'Resume globe rotation to change formation';
+ if(drag)return 'Release the globe to change formation';
+ if(formations.snapshot().transitioning)return 'UFOs are changing formation';
+ return '';
+}
+function syncFormationButton(){
+ const reason=formationUnavailable(),state=formations.snapshot(),description=reason||`Next UFO formation: ${state.next==='coverage'?'globe coverage':'equatorial ring'}`;
+ if(description===formationButtonState)return;
+ formationButtonState=description;formationButton.setAttribute('aria-disabled',String(!!reason));formationButton.dataset.tooltip=description;window.UOSTooltips?.hide();
+}
+formationButton.addEventListener('click',()=>{if(formationUnavailable())return;formations.next();syncFormationButton();window.UOSTooltips?.hide();schedule()});
+formationButton.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();if(!event.repeat)formationButton.dispatchEvent(new MouseEvent('click',{bubbles:true}))}});
 let metrics={frames:0,globeFrames:0,backgroundFrames:0,contexts:0,lost:0,raf:[],cost:[],resolution:[0,0],state:'initialising'};
 let size=0,dpr=1,quality=1,adapted=false;
 const viewUpdate={phi,theta:settings.theta},satelliteUpdate={phi,theta:settings.theta,scale:effectiveScale(),phase:0};
@@ -50,18 +69,20 @@ function tick(now){
   if(last){metrics.raf.push(now-last);if(metrics.raf.length>180)metrics.raf.shift()}last=now;clock+=dt;
   if(!reduced.matches||spaceLast===-Infinity){if(clock-spaceLast>=1/30){window.UOSBackground?.draw(clock*1000);spaceLast=clock;metrics.backgroundFrames++}}
   if(settings.autoRotate&&!drag){const step=settings.speed*dt;phi+=step;spinAngle+=step;if(spinAngle>=Math.PI*2){spinAngle-=Math.PI*2;phi-=Math.PI*2}globeDirty=true}
+  const formationState=formations.advance(dt,{active:!!(globe&&satellites&&settings.satellites&&settings.craftType==='ufos'&&settings.autoRotate&&!drag&&!reduced.matches),speed:settings.speed});
+  syncFormationButton();
   applySize();
   if(globe&&globeDirty){viewUpdate.phi=phi;viewUpdate.theta=settings.theta;globe.update(viewUpdate);globeDirty=false;metrics.globeFrames++}
-  if(globe&&satellites&&settings.satellites){satelliteUpdate.phi=phi-spinAngle;satelliteUpdate.theta=settings.theta;satelliteUpdate.scale=effectiveScale();satelliteUpdate.phase=spinAngle;satellites.draw(satelliteUpdate)}
+  if(globe&&satellites&&settings.satellites){satelliteUpdate.phi=phi-spinAngle;satelliteUpdate.theta=settings.theta;satelliteUpdate.scale=effectiveScale();satelliteUpdate.phase=spinAngle;satelliteUpdate.formationState=formationState;satellites.draw(satelliteUpdate)}
   metrics.frames++;metrics.cost.push(performance.now()-before);if(metrics.cost.length>180)metrics.cost.shift();
   // One bounded reduction after measured sustained frame delays; never oscillate quality.
   if(!adapted&&metrics.raf.length===30){adapted=true;const costs=[...metrics.raf].sort((a,b)=>a-b);if(costs[27]>45){quality=.8;geometryDirty=true}}
   if(!reduced.matches||settings.autoRotate||globeDirty)schedule();else last=0;
 }
 function bindCanvas(){
-canvas.addEventListener('pointerdown',event=>{drag={x:event.clientX,phi};canvas.setPointerCapture(event.pointerId)});
+canvas.addEventListener('pointerdown',event=>{drag={x:event.clientX,phi};canvas.setPointerCapture(event.pointerId);syncFormationButton()});
 canvas.addEventListener('pointermove',event=>{if(!drag)return;phi=drag.phi+(event.clientX-drag.x)/180;globeDirty=true;schedule()});
-for(const event of ['pointerup','pointercancel','lostpointercapture'])canvas.addEventListener(event,()=>{drag=null});
+for(const event of ['pointerup','pointercancel','lostpointercapture'])canvas.addEventListener(event,()=>{drag=null;syncFormationButton()});
 canvas.addEventListener('keydown',event=>{if(event.key==='ArrowLeft')phi-=.12;else if(event.key==='ArrowRight')phi+=.12;else if(event.key==='ArrowUp')settings.theta=Math.min(1.2,settings.theta+.06);else if(event.key==='ArrowDown')settings.theta=Math.max(-1.2,settings.theta-.06);else if(event.key==='Home'){phi=.35;spinAngle=0;settings.theta=.18}else return;event.preventDefault();globeDirty=true;syncControls();schedule()});
 canvas.addEventListener('webglcontextlost',event=>{event.preventDefault();if(disposed||event.target!==canvas)return;metrics.lost++;globe?.destroy();globe=null;unwrapCanvas();satellites?.clear();failed=true;status('Globe paused after graphics context loss. Explorer links remain available.')});
 canvas.addEventListener('webglcontextrestored',event=>{if(event.target===canvas&&!disposed&&!globe)create()});
@@ -72,7 +93,7 @@ for(const input of document.querySelectorAll('[data-setting]'))input.addEventLis
 function panel(open){$('globe-panel').hidden=!open;$('globe-settings').setAttribute('aria-expanded',String(open));if(open)$('control-autoRotate').focus();else $('globe-settings').focus()}
 $('globe-settings').addEventListener('click',()=>panel($('globe-panel').hidden));$('close-globe-panel').addEventListener('click',()=>panel(false));
 document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!$('globe-panel').hidden){panel(false);event.preventDefault()}});
-$('reset-globe').addEventListener('click',()=>{Object.assign(settings,defaults);phi=.35;spinAngle=0;syncControls();applySettings()});
+$('reset-globe').addEventListener('click',()=>{Object.assign(settings,defaults);phi=.35;spinAngle=0;formations.reset();syncControls();applySettings()});
 for(const link of document.querySelectorAll('.logo-hit'))link.addEventListener('keydown',event=>{if(event.key===' '){event.preventDefault();link.click()}});
 if(new URLSearchParams(location.search).get('debugLogo')==='1')document.documentElement.dataset.logoDebug='true';
 function queueResize(){clearTimeout(resizeTimer);resizeTimer=setTimeout(()=>{if(disposed)return;measure();window.UOSBackground?.resize();spaceLast=-Infinity;globeDirty=true;schedule()},100)}
@@ -83,6 +104,6 @@ reduced.addEventListener('change',()=>{syncMotionPreference();schedule()});
 function dispose(){disposed=true;stop();clearTimeout(resizeTimer);observer.disconnect();globe?.destroy();globe=null;unwrapCanvas();glContext?.getExtension('WEBGL_lose_context')?.loseContext();glContext=null;satellites?.destroy();satellites=null;window.UOSBackground?.release();metrics.state='disposed'}
 window.addEventListener('pagehide',dispose);
 window.addEventListener('pageshow',event=>{if(!event.persisted)return;disposed=false;window.UOSBackground?.resize();spaceLast=-Infinity;observer.observe(wrap);const fresh=document.createElement('canvas');fresh.id='satellites';fresh.setAttribute('aria-hidden','true');satellitesCanvas.replaceWith(fresh);satellitesCanvas=fresh;const next=document.createElement('canvas');next.id='globe';next.tabIndex=0;next.setAttribute('aria-label','Interactive globe. Drag to rotate.');canvas.replaceWith(next);canvas=next;bindCanvas();create()});
-window.UOSLauncher={stats:()=>({...metrics,raf:[...metrics.raf],cost:[...metrics.cost],phi,cameraPhi:phi-spinAngle,spinAngle,theta:settings.theta,viewportFactor,effectiveScale:effectiveScale(),pending:!!frame,settings:{...settings},satellites:satellites?.stats()||null,hasGdb:!!window.UOS_WORKSPACE?.hasGdb}),projectSatellite:index=>window.UOSSatellites.positionAt(index,spinAngle,phi-spinAngle,settings.theta)};
+window.UOSLauncher={stats:()=>({...metrics,raf:[...metrics.raf],cost:[...metrics.cost],phi,cameraPhi:phi-spinAngle,spinAngle,theta:settings.theta,viewportFactor,effectiveScale:effectiveScale(),pending:!!frame,settings:{...settings},formation:{...formations.snapshot(),points:undefined},satellites:satellites?.stats()||null,hasGdb:!!window.UOS_WORKSPACE?.hasGdb}),projectSatellite:index=>satellites?.positionAt(index)||null};
 bindCanvas();syncControls();create();
 })();

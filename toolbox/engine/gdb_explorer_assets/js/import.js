@@ -24,7 +24,7 @@ input.addEventListener('change',()=>{const file=input.files?.[0];input.value='';
 cancel.addEventListener('click',()=>{stop();status.textContent=currentName?currentName+' · import cancelled; workspace retained':'Import cancelled'});
 clear.addEventListener('click',()=>{stop();GDBWorkspace.clear();currentName='';status.textContent='ZIP cleared from this tab';error.textContent='';ready()});
 window.addEventListener('pagehide',()=>{disposed=true;stop();GDBChunks.setArchive(null);currentName=''});
-window.addEventListener('pageshow',event=>{if(event.persisted){disposed=false;GDBWorkspace.clear();status.textContent='Open a ZIP again to restore this session';ready()}});
+window.addEventListener('pageshow',event=>{if(event.persisted){disposed=false;GDBWorkspace.clear();status.textContent='';ready()}});
 window.GDBImport={open:load,cancel:()=>cancel.click(),stats:()=>({pending:!!pending,name:currentName,sessionOnly:true})};
 ready();
 })();
